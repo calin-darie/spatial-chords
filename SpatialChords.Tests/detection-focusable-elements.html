@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <style>
+    body > * { display: block; }
+    .collapsed { visibility: collapse; }
+    .hidden { visibility: hidden; }
+    .nodisplay { display: none; }
+  </style>
+</head>
+<body>
+  <!-- http://www.w3.org/TR/html5/editing.html#sequential-focus-navigation-and-the-tabindex-attribute -->
+  <textarea id="start">start here</textarea>
+  <textarea id="focusable1" data-test-description="text area" >text area</textarea>
+  <input type="text" value="text input" id="focusable2" data-test-description="textbox" />
+  <input type="checkbox" id="focusable3" data-test-description="checkbox" />
+  <ul>
+    <li>
+      <input name="radioGroup" type="radio" id="focusable4" data-test-description="radio1" /></li>
+    <li>
+      <input name="radioGroup" type="radio" id="focusable5" data-test-description="radio2" /></li>
+    <li>
+      <input name="radioGroup" type="radio" id="focusable6" data-test-description="radio3" /></li>
+  </ul>
+  <span data-test-description="span-with-tabindex" tabindex="0" onkeydown="function(e) {if (e.keyCode === 32) alert('mama');}" onclick="alert('mama')" id="focusable7">say mama</span>
+  <select data-test-description="select" id="focusable8">
+    <option>a</option>
+    <option>b</option>
+    <option>c</option>
+  </select>
+  <input data-test-description="color picker" type="color" id="focusable9" />
+  <input data-test-description="date time picker" type="datetime" id="focusable10" />
+  <input data-test-description="date picker" type="date" id="focusable11" />
+  <input data-test-description="date time picker local" type="datetime-local" id="focusable12" />
+  <input data-test-description="email input" type="email" id="focusable13" />
+  <input data-test-description="hidden input" type="hidden" id="dummy1" />
+  <input type="text" id="focusable14" data-test-description="text input" />
+  <input data-test-description="disabled text input" disabled="disabled" type="text" id="dummy2" />
+  <a href="http://www.google.com" id="focusable15">anchor with href</a>
+  <a id="dummy3" data-test-description="anchor without href">anchor without href</a>
+  <link itemprop="url" href="http://www.google.com" id="dummy7">itemprop link</link>
+  <textarea class="nodisplay" id="dummy6" data-test-description="display:none textarea"></textarea>
+  <textarea class="hidden" id="dummy5" data-test-description="visibility:hidden textarea"></textarea>
+  <textarea class="collapsed" id="dummy4" data-test-description="visibility:collapsed textarea"></textarea>
+  <button id="focusable16" data-test-description="button"> click me </button>
+  <div contenteditable="true" id="focusable17" data-test-description="content editable" >
+    this is edi[ta]ble
+    <ul id="dummy8"><li>abc</li></ul>
+  </div>
+  <iframe name="nested" src="detection-focusable-elements-nested.html"  id="dummy9" data-test-description="nested content document"></iframe>
+  <iframe name="nested-designmode" src="detection-focusable-elements-nested-designmode.html"  id="focusable20" data-test-description="designable document"></iframe>
+  <!--onload="document.getElementById('focusable19').contentDocument.designMode='on';"-->
+  <!--todo: different domain iframe -->
+</body>
+</html>
