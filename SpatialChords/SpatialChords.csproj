@@ -38,7 +38,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="app\img\icon.png" />
+    <Content Include="app\img\SpatialChords.png" />
     <Content Include="app\SpatialChords.js" />
     <Content Include="app\popup.html" />
     <Content Include="app\popup.js" />
