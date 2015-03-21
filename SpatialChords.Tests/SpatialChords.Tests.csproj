@@ -71,15 +71,12 @@
     <Content Include="basic-navigation-cardinal-points.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="detection-focusable-elements-nested-designmode.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="detection-focusable-elements-nested.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="etection-nested-frame-nested-top.html" />
+    <Content Include="detection-focusable-elements-nested-designmode.html" />
     <Content Include="detection-focusable-elements.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="detection-nested-frame-nested.html" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
