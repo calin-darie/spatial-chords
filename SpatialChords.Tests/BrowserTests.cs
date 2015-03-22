@@ -39,30 +39,6 @@ namespace SpatialChords.Tests
      * definition of cardinal points
      */
 
-    //[TestMethod]
-    //public void ChromeDriverSmokeTest()
-    //{
-    //    _driver.Navigate().GoToUrl("http://www.google.com/ncr");
-    //    IWebElement query = _driver.FindElement(By.Name("q"));
-
-    //    const string searchWord = "Cheese";
-
-    //    // Enter something to search for
-    //    query.SendKeys(searchWord);
-
-    //    // Now submit the form. WebDriver will find the form for us from the element
-    //    query.Submit();
-
-    //    // Google's search is rendered dynamically with JavaScript.
-    //    // Wait for the page to load, timeout after 10 seconds
-    //    var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-    //    var oldTitle = _driver.Title;
-    //    wait.Until((d) => { return d.Title != oldTitle; });
-
-    //    // Should see: "Cheese - Gaoogle Search"
-    //    Assert.AreEqual(string.Format(@"{0} - Google Search", searchWord), _driver.Title);
-    //}
-
     public static class DirectionKey
     {
       public static string Up = "i";
@@ -120,8 +96,23 @@ namespace SpatialChords.Tests
         Assert.AreEqual(id, actualId, string.Format("expected: {0}[{1}], actual:{2}[{3}]", 
           expectedDescription, id, 
           actualDescription, actualId));
-        ExpectFocusMovesOn(id, i.ToString());
       }
+    }
+
+    [TestMethod]
+    public void GivenFocusableElementInAnotherFrame_WhenMovingTowardsIt_ItGetsFocus()
+    {
+      var testUrl = GetTestUrl("detection-inter-frame-top.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("topFocusable");
+      
+      Press(DirectionKey.Down);
+      _driver.SwitchTo().Frame("nested");
+      ExpectFocusMovesOn("nestedFocusable", "down");
+
+      Press(DirectionKey.Up);
+      _driver.SwitchTo().ParentFrame();
+      ExpectFocusMovesOn("topFocusable", "up");
     }
 
     private void SetInitialFocus(string initiallyFocusedId)
@@ -141,21 +132,6 @@ namespace SpatialChords.Tests
       IWebElement currentElement = _driver.SwitchTo().ActiveElement();
       string actualId = currentElement.GetAttribute("id");
       Assert.AreEqual(elementId, actualId, message);
-      //string actualId = string.Empty;
-      //var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(1));
-      //try
-      //{
-      //    wait.Until((d) =>
-      //    {
-      //        IWebElement currentElement = _driver.SwitchTo().ActiveElement();
-      //        actualId = currentElement.GetAttribute("id");
-      //        return Equals(elementId, actualId);
-      //    });
-      //}
-      //catch (WebDriverTimeoutException)
-      //{
-      //    throw new AssertFailedException(string.Format("expected: <{0}>. actual: <{1}>", elementId, actualId));
-      //}
     }
 
     private void Press(string directionKey)

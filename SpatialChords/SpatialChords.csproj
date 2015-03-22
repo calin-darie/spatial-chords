@@ -46,7 +46,6 @@
     <Content Include="Properties\build\lib\Ionic.Zip.DLL" />
     <Content Include="Properties\build\lib\MSBuild.ExtensionPack.dll" />
     <Content Include="screenshots\screenshot.png" />
-    <Content Include="index.htm" />
     <Content Include="Properties\build\ligershark.chrome.targets" />
     <Content Include="screenshots\readme.txt" />
     <Content Include="app\jquery-2.1.3.min.js" />
