@@ -38,7 +38,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="app\background.js" />
     <Content Include="app\img\SpatialChords-128.png" />
+    <Content Include="app\windowMessaging.js" />
     <Content Include="app\SpatialChords.js" />
     <Content Include="app\popup.html" />
     <Content Include="app\popup.js" />
@@ -49,7 +51,6 @@
     <Content Include="Properties\build\ligershark.chrome.targets" />
     <Content Include="screenshots\readme.txt" />
     <Content Include="app\jquery-2.1.3.min.js" />
-    <Content Include="app\jquery.keynav.js" />
     <None Include="scripts\_references.js" />
     <None Include="scripts\chrome-api-vsdoc.js" />
   </ItemGroup>

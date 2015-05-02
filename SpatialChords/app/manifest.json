@@ -4,11 +4,15 @@
   "name": "Spatial Chords",
   "description": "This extension lets you navigate through focusable items using arrow keys.",
   "version": "0.1",
+	"permissions": [ "webNavigation", "tabs" ],
+   "background": {
+      "scripts": [ "background.js" ]
+   },
   "content_scripts": [ {
       "all_frames": true,
 			"matches": ["<all_urls>"],
 			"css": ["SpatialChords.css"],
-			"js": ["jquery-2.1.3.min.js", "jquery.keynav.js", "SpatialChords.js"],
+			"js": ["jquery-2.1.3.min.js", "windowMessaging.js", "SpatialChords.js"],
       "run_at": "document_end"
 		} ],
   "browser_action": {

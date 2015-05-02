@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <title>search all windows test</title>
+</head>
+<body>
+  top document
+  <iframe name="nested1" src="searchallwindows-test-nested-child1.html"></iframe>
+  <iframe name="nested2" src="searchallwindows-test-nested-child2.html"></iframe>
+  <script src="../spatialchords/app/windowMessaging.js"></script>
+  <script src="searchallwindows-exerciser.js"></script>
+  <script>
+    setTimeout(function() {
+      windowMessaging.searchAll('titles', 'addOwnTitle', function (match) {
+        console.log(match);
+        match.execute('appendText');
+      });
+    }, 2000);
+  </script>
+</body>
+</html>

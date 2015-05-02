@@ -83,6 +83,11 @@
     <Content Include="detection-inter-frame-nested.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="searchAllWindows-exerciser.js" />
+    <Content Include="searchAllWindows-test-nested-grandchild1.1.html" />
+    <Content Include="searchAllWindows-test-nested-child2.html" />
+    <Content Include="searchAllWindows-test-nested-child1.html" />
+    <Content Include="searchAllWindows-test-top.html" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
