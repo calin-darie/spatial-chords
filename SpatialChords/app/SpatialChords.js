@@ -5,36 +5,8 @@
       top: 0
     },
     currentDocumentAbsoluteOffset = defaultAbsoluteOffset;
-
-  $(document).on('keydown', function (e) {
-    var isLeftAltTheOnlyModifierPressed = event.altKey && !event.ctrlKey && !event.shiftKey;
-    if (!isLeftAltTheOnlyModifierPressed) return;
-    console.log('keydown', e);
-    switch (e.which) {
-      case keyCodeOf('I'):
-        go('up');
-        break;
-      case keyCodeOf('J'):
-        go('left');
-        break;
-      case keyCodeOf('K'):
-        go('down');
-        break;
-      case keyCodeOf('L'):
-        go('right');
-        break;
-    }
-
-    function go(direction){
-      windowMessaging.searchAll(
-        { direction: direction, activeRectangle: getRectangle(document.activeElement)},
-        'searchForClosest',
-        function(match) {
-          match.execute('focusClosest');
-        }
-      );
-    }
-  });
+  
+  document.addEventListener("keydown", handleKeyDown);
 
   windowMessaging.handlers.searchForClosest = {
     handle: function (search, context, currentClosest) {
@@ -47,17 +19,18 @@
         result = isUpdate
           ? closestInCurrentWindow
           : currentClosest;
-      closestElement = result.element;
+      closestElement = closestInCurrentWindow.element;
       return {
         isUpdate: isUpdate,
         data: { distance: result.distance }
       };
     },
     getContext: function (frame) {
+      var frameRectangle = getRectangle(frame);
       return {
-        absolutePosition: {//todo: use getRectangle
-          left: currentDocumentAbsoluteOffset.left + frame.offsetLeft,
-          top: currentDocumentAbsoluteOffset.left + frame.offsetTop
+        absolutePosition: {
+          left: frameRectangle.left,
+          top: frameRectangle.top
         }
       };
     }
@@ -73,14 +46,44 @@
     }
   };
 
+
+  function handleKeyDown(e) {
+    var isLeftAltTheOnlyModifierPressed = event.altKey && !event.ctrlKey && !event.shiftKey;
+    if (!isLeftAltTheOnlyModifierPressed) return;
+    switch (e.which) {
+      case keyCodeOf('I'):
+        go('up');
+        break;
+      case keyCodeOf('J'):
+        go('left');
+        break;
+      case keyCodeOf('K'):
+        go('down');
+        break;
+      case keyCodeOf('L'):
+        go('right');
+        break;
+    }
+
+    function go(direction) {
+      windowMessaging.searchAll(
+        { direction: direction, activeRectangle: getRectangle(document.activeElement) },
+        'searchForClosest',
+        function (match) {
+          match.execute('focusClosest');
+        }
+      );
+    }
+  };
+
   function setActive(e) {
     var cur = document.activeElement;
-    if (cur) $(cur).trigger('blur');
-    $(e).trigger('focus');
+    if (cur) cur.blur();
+    e.focus();
   };
 
   function getClosestFocusableInCurrentWindow(search) {
-    var strategy = createStrategy(search); // todo: refactor strategy to direction?
+    var strategy = createStrategy(search);
     var focusableElements = getFocusableElements();
     var focusable,
       rectangle,
@@ -108,8 +111,7 @@
 
   function getFocusableElements() {
     return where(isFocusable,
-      $("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex], *[contenteditable]") //todo: get rid of jQuery?
-      .toArray());
+      document.querySelectorAll("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex], *[contenteditable]"));
   };
 
   function createStrategy(search) {
@@ -178,7 +180,6 @@
       default:
         throw new Error('unsupported direction');
     }
-    //todo: poker hand test
 
     return {
       distanceTo: function (rectangle) {
@@ -214,8 +215,10 @@
   function getRectangle(e) {
     var left = currentDocumentAbsoluteOffset.left,
       top = currentDocumentAbsoluteOffset.top,
-      width = intval($.css(e, 'width')),
-      height = intval($.css(e, 'height'));
+      computedStyle = window.getComputedStyle(e),
+      width = intval(computedStyle.getPropertyValue("width")),
+      height = intval(computedStyle.getPropertyValue("height"));
+    console.log("getRectangle ", computedStyle, width, height);
     while (e) {
       left += e.offsetLeft + (e.currentStyle ? intval(e.currentStyle.borderLeftWidth) : 0);
       top += e.offsetTop + (e.currentStyle ? intval(e.currentStyle.borderTopWidth) : 0);
@@ -239,23 +242,12 @@
 
   function isFocusable(element) {
     var computedStyle = window.getComputedStyle(element);
-    return computedStyle.visibility === "visible"
-      && computedStyle.display !== "none"
-      && computedStyle.width !== 0 && computedStyle.height !== 0
+    return computedStyle.getPropertyValue("visibility") === "visible"
+      && computedStyle.getPropertyValue("display") !== "none"
+      && intval(computedStyle.getPropertyValue("width")) !== 0
+      && intval(computedStyle.getPropertyValue("height")) !== 0
       && element.disabled !== true;
   }
-
-  function where(predicate, collection) {
-    var quad = Array(), i;
-
-    for (i = 0; i < collection.length; i++) {
-      var el = collection[i];
-      if (predicate(el))
-        quad.push(el);
-    }
-    return quad;
-  };
-
 
   function keyCodeOf(c) {
     return c.charCodeAt(0);

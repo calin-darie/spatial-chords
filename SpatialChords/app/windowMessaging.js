@@ -100,10 +100,16 @@
       function (f) {
         return {
           context: windowMessaging.handlers[handlerName].getContext(f),
-          window: f.contentWindow
+          window: f.contentWindow,
         };
       },
-      document.querySelectorAll("iframe, frame"));
+      where(function (frame) {
+        var computedStyle = window.getComputedStyle(frame);
+        return computedStyle.visibility === "visible"
+          && computedStyle.display !== "none"
+          && computedStyle.width !== 0 && computedStyle.height !== 0
+          && frame.disabled !== true;
+      }, document.querySelectorAll("iframe, frame")));
   }
 
   function createBroadcast(broadcastName, getUpdatedResult) {
@@ -115,7 +121,7 @@
 
     function searchAll(search, handlerName, onDone) {
       recurseSearch(search, handlerName, callBack,
-        [{ window: window.top, context: {} }],
+        [{ window: window.top, context: {}, src: "top" }],
         "",
         createResult());
       function callBack(result) {
@@ -140,6 +146,7 @@
       function post(destinationFrame, continueForeachAsync) {
         var destinationWindow = destinationFrame.window;
         window.addEventListener("message", handleResponse);
+        console.log('posting to ' + destinationFrame.src);
         destinationWindow.postMessage({
           broadcast: broadcastName,
           search: search,
@@ -195,3 +202,15 @@ function select(selectorFunction, collection) {
   }
   return result;
 }
+
+
+function where(predicate, collection) {
+  var quad = Array(), i;
+
+  for (i = 0; i < collection.length; i++) {
+    var el = collection[i];
+    if (predicate(el))
+      quad.push(el);
+  }
+  return quad;
+};
