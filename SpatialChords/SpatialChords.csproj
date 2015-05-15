@@ -39,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app\background.js" />
+    <Content Include="app\enumerable.js" />
     <Content Include="app\img\SpatialChords-128.png" />
     <Content Include="app\windowMessaging.js" />
     <Content Include="app\SpatialChords.js" />

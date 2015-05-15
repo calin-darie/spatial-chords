@@ -96,20 +96,22 @@
   }
 
   function getFrames(handlerName) {
-    return select(
-      function (f) {
-        return {
-          context: windowMessaging.handlers[handlerName].getContext(f),
-          window: f.contentWindow,
-        };
-      },
-      where(function (frame) {
-        var computedStyle = window.getComputedStyle(frame);
-        return computedStyle.visibility === "visible"
-          && computedStyle.display !== "none"
-          && computedStyle.width !== 0 && computedStyle.height !== 0
-          && frame.disabled !== true;
-      }, document.querySelectorAll("iframe, frame")));
+    return enumerable
+        .from(document.querySelectorAll("iframe, frame"))
+        .where(isVisibleAndEnabled)
+        .select(function (f) { return {
+            context: windowMessaging.handlers[handlerName].getContext(f),
+            window: f.contentWindow,
+          }; })
+        .toArray();
+  }
+
+  function isVisibleAndEnabled(frame) {
+    var computedStyle = window.getComputedStyle(frame);
+    return computedStyle.visibility === "visible"
+      && computedStyle.display !== "none"
+      && computedStyle.width !== 0 && computedStyle.height !== 0
+      && frame.disabled !== true;
   }
 
   function createBroadcast(broadcastName, getUpdatedResult) {
@@ -191,26 +193,3 @@
     }
   }
 })();
-
-function select(selectorFunction, collection) {
-  var i,
-    element,
-    result = [];
-  for (i = 0; i < collection.length; ++i) {
-    element = collection[i];
-    result[i] = selectorFunction(element);
-  }
-  return result;
-}
-
-
-function where(predicate, collection) {
-  var quad = Array(), i;
-
-  for (i = 0; i < collection.length; i++) {
-    var el = collection[i];
-    if (predicate(el))
-      quad.push(el);
-  }
-  return quad;
-};

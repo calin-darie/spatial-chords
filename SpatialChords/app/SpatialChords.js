@@ -110,8 +110,11 @@
   };
 
   function getFocusableElements() {
-    return where(isFocusable,
-      document.querySelectorAll("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex], *[contenteditable]"));
+    var focusableElements = document.querySelectorAll("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex], *[contenteditable]");
+    return enumerable
+      .from(focusableElements)
+      .where(isFocusable)
+      .toArray();
   };
 
   function createStrategy(search) {

@@ -30,9 +30,7 @@ namespace SpatialChords.Tests
 
     /*
      * todo:
-     * dynamically added / hidden elements
-     * iframes: entering nested, exiting from nested, other domain src
-     * definition of cardinal points
+     * iframes: other domain src
      */
 
     public static class DirectionKey

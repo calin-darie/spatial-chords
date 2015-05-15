@@ -12,7 +12,7 @@
       "all_frames": true,
 			"matches": ["<all_urls>"],
 			"css": ["SpatialChords.css"],
-			"js": ["windowMessaging.js", "SpatialChords.js"],
+			"js": ["enumerable.js", "windowMessaging.js", "SpatialChords.js"],
       "run_at": "document_end"
 		} ],
   "browser_action": {
