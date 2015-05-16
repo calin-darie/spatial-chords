@@ -38,7 +38,7 @@
 
   windowMessaging.handlers.focusClosest = {
     handle: function () {
-      if (typeof closestElement !== 'object') return;
+      if (typeof closestElement !== 'object' || closestElement === null) return;
       setActive(closestElement);
     },
     getContext: function () {
@@ -218,9 +218,8 @@
   function getRectangle(e) {
     var left = currentDocumentAbsoluteOffset.left,
       top = currentDocumentAbsoluteOffset.top,
-      computedStyle = window.getComputedStyle(e),
-      width = intval(computedStyle.getPropertyValue("width")),
-      height = intval(computedStyle.getPropertyValue("height"));
+      width = e.offsetWidth,
+      height = e.offsetHeight;
     while (e) {
       left += e.offsetLeft + (e.currentStyle ? intval(e.currentStyle.borderLeftWidth) : 0);
       top += e.offsetTop + (e.currentStyle ? intval(e.currentStyle.borderTopWidth) : 0);
@@ -246,8 +245,8 @@
     var computedStyle = window.getComputedStyle(element);
     return computedStyle.getPropertyValue("visibility") === "visible"
       && computedStyle.getPropertyValue("display") !== "none"
-      && intval(computedStyle.getPropertyValue("width")) !== 0
-      && intval(computedStyle.getPropertyValue("height")) !== 0
+      && element.offsetWidth !== 0
+      && element.offsetHeight !== 0
       && element.disabled !== true;
   }
 

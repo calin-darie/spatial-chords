@@ -64,6 +64,20 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("center", "left");
     }
 
+
+    [TestMethod]
+    public void GivenTopmostElementAboveFocusedElement_WhenUpPressedTwice_FocusStaysOnTopmost()
+    {
+      var testUrl = GetTestUrl("basic-navigation-cardinal-points.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("center");
+
+      Press(DirectionKey.Up);
+      ExpectFocusMovesOn("north", "up");
+      Press(DirectionKey.Up);
+      ExpectFocusMovesOn("north", "up");
+    }
+
     [TestMethod]
     public void GivenFocusableAndNonFocusableElementsInAColumn_WhenMovingDown_NonFocusablesAreSkippedWhileFocusablesAreFocused()
     {
