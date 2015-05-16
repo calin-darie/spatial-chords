@@ -221,7 +221,6 @@
       computedStyle = window.getComputedStyle(e),
       width = intval(computedStyle.getPropertyValue("width")),
       height = intval(computedStyle.getPropertyValue("height"));
-    console.log("getRectangle ", computedStyle, width, height);
     while (e) {
       left += e.offsetLeft + (e.currentStyle ? intval(e.currentStyle.borderLeftWidth) : 0);
       top += e.offsetTop + (e.currentStyle ? intval(e.currentStyle.borderTopWidth) : 0);

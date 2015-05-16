@@ -5,9 +5,6 @@
   "description": "This extension lets you navigate through focusable items using arrow keys.",
   "version": "0.1",
 	"permissions": [ "webNavigation", "tabs" ],
-   "background": {
-      "scripts": [ "background.js" ]
-   },
   "content_scripts": [ {
       "all_frames": true,
 			"matches": ["<all_urls>"],
