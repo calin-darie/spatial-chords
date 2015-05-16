@@ -98,20 +98,11 @@
   function getFrames(handlerName) {
     return enumerable
         .from(document.querySelectorAll("iframe, frame"))
-        .where(isVisibleAndEnabled)
         .select(function (f) { return {
             context: windowMessaging.handlers[handlerName].getContext(f),
-            window: f.contentWindow,
+            window: f.contentWindow
           }; })
         .toArray();
-  }
-
-  function isVisibleAndEnabled(frame) {
-    var computedStyle = window.getComputedStyle(frame);
-    return computedStyle.visibility === "visible"
-      && computedStyle.display !== "none"
-      && computedStyle.width !== 0 && computedStyle.height !== 0
-      && frame.disabled !== true;
   }
 
   function createBroadcast(broadcastName, getUpdatedResult) {
@@ -148,7 +139,6 @@
       function post(destinationFrame, continueForeachAsync) {
         var destinationWindow = destinationFrame.window;
         window.addEventListener("message", handleResponse);
-        console.log('posting to ' + destinationFrame.src);
         destinationWindow.postMessage({
           broadcast: broadcastName,
           search: search,
