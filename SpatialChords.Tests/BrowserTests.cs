@@ -28,11 +28,6 @@ namespace SpatialChords.Tests
       _driver.Dispose();
     }
 
-    /*
-     * todo:
-     * iframes: other domain src
-     */
-
     public static class DirectionKey
     {
       public static string Up = "i";
