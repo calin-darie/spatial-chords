@@ -4,7 +4,6 @@
   "name": "Spatial Chords",
   "description": "This extension lets you navigate through focusable items using arrow keys.",
   "version": "0.1",
-	"permissions": [ "webNavigation", "tabs" ],
   "content_scripts": [ {
       "all_frames": true,
 			"matches": ["<all_urls>"],
