@@ -62,8 +62,15 @@
     var serializedCurrentResult;
     var result;
     var broadcast;
-    if (event.data.isResponse === true) return;
+    if (event.data.isAcknowledge === true ||
+        event.data.isResponse === true) return;
     if (!broadcasts.hasOwnProperty(event.data.broadcast)) return;
+
+
+    event.source.postMessage({
+      broadcast: event.data.broadcast,
+      isAcknowledge: true
+    }, "*");
     
     broadcast = broadcasts[event.data.broadcast];
     
@@ -100,7 +107,9 @@
         .from(document.querySelectorAll("iframe, frame"))
         .select(function (f) { return {
             context: windowMessaging.handlers[handlerName].getContext(f),
-            window: f.contentWindow
+            window: f.contentWindow,
+            src: f.src,
+            frame: f
           }; })
         .toArray();
   }
@@ -139,6 +148,9 @@
       function post(destinationFrame, continueForeachAsync) {
         var destinationWindow = destinationFrame.window;
         window.addEventListener("message", handleResponse);
+        window.addEventListener("message", handleAcknowledge);
+        var timeoutToken = setTimeout(handleError, 50);
+
         destinationWindow.postMessage({
           broadcast: broadcastName,
           search: search,
@@ -149,6 +161,21 @@
           },
           currentResult: currentResult
         }, "*");
+
+        function handleError() {
+          window.removeEventListener("message", handleAcknowledge);
+          window.removeEventListener("message", handleResponse);
+          continueForeachAsync();
+        }
+
+        function handleAcknowledge(event) {
+          if (event.data.broadcast === broadcastName &&
+            event.data.isAcknowledge === true &&
+            event.source === destinationWindow) {
+            clearTimeout(timeoutToken);
+            window.removeEventListener("message", handleAcknowledge);
+          }
+        }
 
         function handleResponse(event) {
           if (event.data.broadcast === broadcastName &&

@@ -3,6 +3,8 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium;
 using System.Reflection;
 using System.IO;
+using System.Threading;
+using System;
 
 namespace SpatialChords.Tests
 {
@@ -118,6 +120,17 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("topFocusable", "up");
     }
 
+    [TestMethod]
+    public void GivenSandboxedFrameOnPage_NavigationOutsideSandboxStillWorks()
+    {
+      var testUrl = GetTestUrl("sandboxed-frame-container.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("startingPoint");
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("destination", "down");
+    }
+
     private void SetInitialFocus(string initiallyFocusedId)
     {
       IWebElement centralElement = _driver.FindElement(By.Id(initiallyFocusedId));
@@ -132,9 +145,25 @@ namespace SpatialChords.Tests
 
     private void ExpectFocusMovesOn(string elementId, string message)
     {
+      RetryAssertAreEqual(elementId, GetActiveElementId, message);
+    }
+
+    private void RetryAssertAreEqual(string expectedValue, Func<string> getActualValue, string message)
+    {
+      string actualValue = null;
+      for (int triesLeft = 3; triesLeft > 0; triesLeft--)
+      {
+        actualValue = getActualValue();
+        if (Equals(actualValue, expectedValue)) break;
+        Thread.Sleep(250);
+      }
+      Assert.AreEqual(expectedValue, actualValue, message);
+    }
+
+    private static string GetActiveElementId()
+    {
       IWebElement currentElement = _driver.SwitchTo().ActiveElement();
-      string actualId = currentElement.GetAttribute("id");
-      Assert.AreEqual(elementId, actualId, message);
+      return currentElement.GetAttribute("id");
     }
 
     private void Press(string directionKey)
