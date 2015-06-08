@@ -131,6 +131,20 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("destination", "down");
     }
 
+    [TestMethod]
+    public void GivenMultipleSandboxedFramesOnPageAndNoChange_PerformancePenaltyIsOnlyPayedOnce()
+    {
+      var testUrl = GetTestUrl("sandboxed-frame-container-performance.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("firstStep", "down", 999);
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("finish", "down", 99);
+    }
+
     private void SetInitialFocus(string initiallyFocusedId)
     {
       IWebElement centralElement = _driver.FindElement(By.Id(initiallyFocusedId));
@@ -143,19 +157,20 @@ namespace SpatialChords.Tests
       return string.Format(@"file://{0}\{1}", Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
     }
 
-    private void ExpectFocusMovesOn(string elementId, string message)
+    private void ExpectFocusMovesOn(string elementId, string message, int timeoutMilliseconds = 99)
     {
-      RetryAssertAreEqual(elementId, GetActiveElementId, message);
+      RetryAssertAreEqual(elementId, GetActiveElementId, message, timeoutMilliseconds);
     }
 
-    private void RetryAssertAreEqual(string expectedValue, Func<string> getActualValue, string message)
+    private void RetryAssertAreEqual(string expectedValue, Func<string> getActualValue, string message, int timeoutMilliseconds)
     {
+      const int totalTries = 3;
       string actualValue = null;
-      for (int triesLeft = 3; triesLeft > 0; triesLeft--)
+      for (int triesLeft = totalTries; triesLeft > 0; triesLeft--)
       {
         actualValue = getActualValue();
         if (Equals(actualValue, expectedValue)) break;
-        Thread.Sleep(250);
+        Thread.Sleep(timeoutMilliseconds / totalTries);
       }
       Assert.AreEqual(expectedValue, actualValue, message);
     }

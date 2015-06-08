@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <title>naviagation should still work when the page contains a sandboxed frame</title>
+  <style>
+    body > * {
+      display:block;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="start">start here</textarea>
+  <textarea id="firstStep">sacrifice performance only for the first time on your way here</textarea>
+  <textarea id="finish">here you should get much faster</textarea>
+  <!--sandbox attribute, from
+    https://developer.mozilla.org/en/docs/Web/HTML/Element/iframe#attr-sandbox
+    The value of the attribute can either be an empty string (all the restrictions are applied) or...
+    -->
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+  <iframe name="nested" sandbox="" src="detection-inter-frame-nested.html"></iframe>
+</body>
+</html>

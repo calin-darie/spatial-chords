@@ -4,6 +4,7 @@
     searchAllWindows: createBroadcast("searchAllWindows", letExternalHandlerUpdateResult),
     findByPath: createBroadcast("findByPath", updateResultIfPathMatches)
   };
+  var blacklist = [];
 
   var createResult = (function () {
     var nullSearchResult = {
@@ -105,13 +106,17 @@
   function getFrames(handlerName) {
     return enumerable
         .from(document.querySelectorAll("iframe, frame"))
+        .where(isNotBlacklisted)
         .select(function (f) { return {
             context: windowMessaging.handlers[handlerName].getContext(f),
             window: f.contentWindow,
-            src: f.src,
-            frame: f
+            blacklist: function () { blacklist.push(f); }
           }; })
         .toArray();
+  }
+
+  function isNotBlacklisted(frame) {
+    return blacklist.indexOf(frame) < 0;
   }
 
   function createBroadcast(broadcastName, getUpdatedResult) {
@@ -123,7 +128,7 @@
 
     function searchAll(search, handlerName, onDone) {
       recurseSearch(search, handlerName, callBack,
-        [{ window: window.top, context: {}, src: "top" }],
+        [{ window: window.top, context: {}}],
         "",
         createResult());
       function callBack(result) {
@@ -149,7 +154,7 @@
         var destinationWindow = destinationFrame.window;
         window.addEventListener("message", handleResponse);
         window.addEventListener("message", handleAcknowledge);
-        var timeoutToken = setTimeout(handleError, 50);
+        var timeoutToken = setTimeout(handleTimeout, 50);
 
         destinationWindow.postMessage({
           broadcast: broadcastName,
@@ -162,9 +167,10 @@
           currentResult: currentResult
         }, "*");
 
-        function handleError() {
+        function handleTimeout() {
           window.removeEventListener("message", handleAcknowledge);
           window.removeEventListener("message", handleResponse);
+          destinationFrame.blacklist();
           continueForeachAsync();
         }
 
