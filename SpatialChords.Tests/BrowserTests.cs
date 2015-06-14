@@ -5,6 +5,7 @@ using System.Reflection;
 using System.IO;
 using System.Threading;
 using System;
+using System.Drawing;
 
 namespace SpatialChords.Tests
 {
@@ -143,6 +144,30 @@ namespace SpatialChords.Tests
 
       Press(DirectionKey.Down);
       ExpectFocusMovesOn("finish", "down", 99);
+    }
+
+
+
+    [TestMethod]
+    public void GivenFocusedElement_ItGlows()
+    {
+      var testUrl = GetTestUrl("highlighting-focused-element.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("center");
+
+      using (Bitmap image = GetPageScreenshot())
+      {
+        int highlightColor = image.GetPixel(2, 2).ToArgb();
+        int backgroundColor = image.GetPixel(400, 400).ToArgb();
+        Assert.AreNotEqual(backgroundColor, highlightColor);
+      }
+    }
+
+    private static Bitmap GetPageScreenshot()
+    {
+      Screenshot screenShot = ((ITakesScreenshot)_driver).GetScreenshot();
+      var image = new Bitmap(new MemoryStream(screenShot.AsByteArray));
+      return image;
     }
 
     private void SetInitialFocus(string initiallyFocusedId)
