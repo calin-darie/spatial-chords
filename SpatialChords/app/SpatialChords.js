@@ -1,10 +1,15 @@
 ﻿(function () {
-  var closestElement,
+  var closestElement, cursorPositionNextToClosestElement,
     defaultAbsoluteOffset = {
       left: 0,
       top: 0
     },
-    currentDocumentAbsoluteOffset = defaultAbsoluteOffset;
+    currentDocumentAbsoluteOffset = defaultAbsoluteOffset,
+    cursor= null;
+
+  if (window == window.top) {
+    setCursor(createCursor());
+  }
   
   document.addEventListener("keydown", handleKeyDown);
 
@@ -19,7 +24,27 @@
         result = isUpdate
           ? closestInCurrentWindow
           : currentClosest;
+
       closestElement = closestInCurrentWindow.element;
+      if (closestElement != null) {
+        switch (search.direction) {
+          case 'up':
+          case 'down':
+            cursorPositionNextToClosestElement = {
+              left: search.activeRectangle.left,
+              top: getRectangle(closestElement).top
+            }
+            break;
+          case 'left':
+          case 'right':
+            cursorPositionNextToClosestElement = {
+              left: getRectangle(closestElement).left,
+              top: search.activeRectangle.top
+            }
+            break;
+        }
+      }
+
       return {
         isUpdate: isUpdate,
         data: { distance: result.distance }
@@ -39,6 +64,7 @@
   windowMessaging.handlers.focusClosest = {
     handle: function () {
       if (typeof closestElement !== 'object' || closestElement === null) return;
+      setCursor(createCursor(cursorPositionNextToClosestElement));
       setActive(closestElement);
     },
     getContext: function () {
@@ -46,10 +72,37 @@
     }
   };
 
+  function setCursor(newCursor) {
+    if (cursor != null) {
+      cursor.dispose();
+      unregisterCursorFocusEvents();
+    }
+    cursor = newCursor;
+    registerCursorFocusEvents();
+  }
+
+  function registerCursorFocusEvents() {
+    if (cursor != null) {
+      document.addEventListener('focusout', cursor.dispose);
+    }
+    document.addEventListener('focusin', followFocusWithCursor);
+  }
+
+  function unregisterCursorFocusEvents() {
+    if (cursor != null) {
+      document.removeEventListener('focusout', cursor.dispose);
+    }
+    document.removeEventListener('focusin', followFocusWithCursor);
+  }
+
+  function followFocusWithCursor() {
+    setCursor(createCursor(getRectangle(document.activeElement)));
+  }
 
   function handleKeyDown(e) {
     var isLeftAltTheOnlyModifierPressed = event.altKey && !event.ctrlKey && !event.shiftKey;
     if (!isLeftAltTheOnlyModifierPressed) return;
+    if (cursor == null) return;
     switch (e.which) {
       case keyCodeOf('I'):
         go('up');
@@ -64,22 +117,25 @@
         go('right');
         break;
     }
-
-    function go(direction) {
-      windowMessaging.searchAll(
-        { direction: direction, activeRectangle: getRectangle(document.activeElement) },
-        'searchForClosest',
-        function (match) {
-          match.execute('focusClosest');
-        }
-      );
-    }
   };
+
+  function go(direction) {
+    windowMessaging.searchAll(
+      { direction: direction, activeRectangle: cursor.getRectangle() },
+      'searchForClosest',
+      function (match) {
+        if (cursor != null) { cursor.dispose(); }
+        match.execute('focusClosest');
+      }
+    );
+  }
 
   function setActive(e) {
     var cur = document.activeElement;
+    unregisterCursorFocusEvents();
     if (cur) cur.blur();
     e.focus();
+    registerCursorFocusEvents();
   };
 
   function getClosestFocusableInCurrentWindow(search) {
@@ -261,4 +317,29 @@
       rectangle2.bottom === rectangle1.bottom;
   }
 
+  function createCursor(position) {
+    var element = document.createElement('span');
+    var isDisposed = false;
+    element.id = "spatial-chords-cursor";
+    position = position || { left: window.innerWidth / 4, top: -1 };
+    document.body.appendChild(element);
+    moveTo(position);
+    return {
+      moveTo: moveTo,
+      getRectangle: getRectangle.bind(window, element),
+      dispose: dispose
+    }
+
+    function moveTo(position) {
+      element.style.position = "absolute";
+      element.style.top = (position.top - currentDocumentAbsoluteOffset.top) + "px";
+      element.style.left = (position.left - currentDocumentAbsoluteOffset.left) + "px";
+    }
+    function dispose() {
+      if (isDisposed) return;
+      isDisposed = true;
+      element.parentElement.removeChild(element);
+      element = null;
+    }
+  }
 })();

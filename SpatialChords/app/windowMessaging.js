@@ -128,7 +128,7 @@
 
     function searchAll(search, handlerName, onDone) {
       recurseSearch(search, handlerName, callBack,
-        [{ window: window.top, context: {}}],
+        [{ window: window.top, context: {}, blacklist: function () {} }],
         "",
         createResult());
       function callBack(result) {
@@ -170,6 +170,7 @@
         function handleTimeout() {
           window.removeEventListener("message", handleAcknowledge);
           window.removeEventListener("message", handleResponse);
+          console.log(destinationFrame.window, typeof destinationFrame.blacklist);
           destinationFrame.blacklist();
           continueForeachAsync();
         }

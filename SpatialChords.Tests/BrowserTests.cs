@@ -146,7 +146,18 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("finish", "down", 99);
     }
 
+    [TestMethod]
+    public void Given3NonCollinearElements_WhenPerformingOpposingActions_IAlwaysEndUpWhereIStartedFrom ()
+    {
+      var testUrl = GetTestUrl("cursor-position-symetry.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("north");
 
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("west", "left");
+      Press(DirectionKey.Right);
+      ExpectFocusMovesOn("north", "right");
+    }
 
     [TestMethod]
     public void GivenFocusedElement_ItGlows()

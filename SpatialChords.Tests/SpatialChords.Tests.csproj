@@ -71,6 +71,9 @@
     <Content Include="basic-navigation-cardinal-points.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="cursor-position-symetry.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="highlighting-focused-element.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -1,3 +1,8 @@
 ﻿*:focus {
-    box-shadow: 0px 0px 5px 5px orange !important; 
+  box-shadow: 0px 0px 5px 5px orange !important; 
+}
+
+#spatial-chords-cursor {
+  box-shadow: 0px 0px 5px 5px orange;
+  z-index: 2147483647;
 }
