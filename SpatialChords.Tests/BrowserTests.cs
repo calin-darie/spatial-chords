@@ -174,6 +174,19 @@ namespace SpatialChords.Tests
       }
     }
 
+    [TestMethod]
+    public void WhenChangingMovementAxisThenTheFocusedElementBecomesTheNewOrigin()
+    {
+      var testUrl = GetTestUrl("changing-movement-axis.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("origin");
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("pivot", "down");
+      Press(DirectionKey.Right);
+      ExpectFocusMovesOn("beyondPivot", "right");
+    }
+
     private static Bitmap GetPageScreenshot()
     {
       Screenshot screenShot = ((ITakesScreenshot)_driver).GetScreenshot();

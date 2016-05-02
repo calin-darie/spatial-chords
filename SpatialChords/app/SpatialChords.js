@@ -1,11 +1,11 @@
 ﻿(function () {
-  var closestElement, cursorPositionNextToClosestElement,
+  var closestElement, proposedCursor,
     defaultAbsoluteOffset = {
       left: 0,
       top: 0
     },
     currentDocumentAbsoluteOffset = defaultAbsoluteOffset,
-    cursor= null;
+    cursor = null;
 
   if (window == window.top) {
     setCursor(createCursor());
@@ -25,30 +25,34 @@
           ? closestInCurrentWindow
           : currentClosest;
 
-      closestElement = closestInCurrentWindow.element;
-      if (closestElement != null) {
-        switch (search.direction) {
-          case 'up':
-          case 'down':
-            cursorPositionNextToClosestElement = {
-              left: search.activeRectangle.left,
-              top: getRectangle(closestElement).top
-            }
-            break;
-          case 'left':
-          case 'right':
-            cursorPositionNextToClosestElement = {
-              left: getRectangle(closestElement).left,
-              top: search.activeRectangle.top
-            }
-            break;
-        }
-      }
+        closestElement = closestInCurrentWindow.element;
 
-      return {
-        isUpdate: isUpdate,
-        data: { distance: result.distance }
-      };
+        proposedCursor = createCursor(
+          proposeCursorPosition(closestElement, getAxis(search.direction), search.originRectangle),
+          search.direction
+        );
+      
+        return {
+          isUpdate: isUpdate,
+          data: { distance: result.distance }
+        };
+
+        function proposeCursorPosition(proposedElement, searchAxis, searchOriginRectangle) {
+          if (proposedElement == null) return null; 
+
+          switch (searchAxis) {
+            case 'vertical':
+              return {
+                left: searchOriginRectangle.left,
+                top: getRectangle(proposedElement).top
+              }
+            case 'horizontal':
+              return {
+                left: getRectangle(proposedElement).left,
+                top: searchOriginRectangle.top
+              }
+          }
+        }
     },
     getContext: function (frame) {
       var frameRectangle = getRectangle(frame);
@@ -64,7 +68,7 @@
   windowMessaging.handlers.focusClosest = {
     handle: function () {
       if (typeof closestElement !== 'object' || closestElement === null) return;
-      setCursor(createCursor(cursorPositionNextToClosestElement));
+      setCursor(proposedCursor);
       setActive(closestElement);
     },
     getContext: function () {
@@ -79,6 +83,14 @@
     }
     cursor = newCursor;
     registerCursorFocusEvents();
+    newCursor.show();
+  }
+
+  function clearCursor() {
+    if (cursor == null) return;
+    cursor.dispose();
+    unregisterCursorFocusEvents();
+    cursor = null;
   }
 
   function registerCursorFocusEvents() {
@@ -96,13 +108,17 @@
   }
 
   function followFocusWithCursor() {
-    setCursor(createCursor(getRectangle(document.activeElement)));
+    var newOrigin = getCursorPositionForElementAsOrigin(document.activeElement);
+    setCursor(createCursor(newOrigin));
+  }
+
+  function getCursorPositionForElementAsOrigin(element) {
+    return getRectangle(element);
   }
 
   function handleKeyDown(e) {
     var isLeftAltTheOnlyModifierPressed = event.altKey && !event.ctrlKey && !event.shiftKey;
     if (!isLeftAltTheOnlyModifierPressed) return;
-    if (cursor == null) return;
     switch (e.which) {
       case keyCodeOf('I'):
         go('up');
@@ -120,14 +136,34 @@
   };
 
   function go(direction) {
+    if (cursor == null) return null;
+
     windowMessaging.searchAll(
-      { direction: direction, activeRectangle: cursor.getRectangle() },
+      {
+        direction: direction,
+        originRectangle: getAxis(direction) == getAxis(cursor.getDirection()) ?
+          cursor.getRectangle() :
+          getRectangle(document.activeElement)
+      },
       'searchForClosest',
       function (match) {
-        if (cursor != null) { cursor.dispose(); }
+        clearCursor();
         match.execute('focusClosest');
       }
     );
+  }
+
+  function getAxis(direction) {
+    switch (direction) {
+      case 'up':
+      case 'down':
+        return "vertical";
+      case 'left':
+      case 'right':
+        return "horizontal";
+      default:
+        throw "invalid direction '" + direction + "'";
+    }
   }
 
   function setActive(e) {
@@ -152,7 +188,7 @@
     for (i = 0; i < focusableElements.length; i++) {
       focusable = focusableElements[i];
       rectangle = getRectangle(focusable);
-      if (rectanglesAreEqual(rectangle, search.activeRectangle) ||
+      if (rectanglesAreEqual(rectangle, search.originRectangle) ||
         !strategy.isCandidate(rectangle)) continue;
       distance = strategy.distanceTo(rectangle);
       if (distance < currentClosest.distance) {
@@ -178,8 +214,8 @@
     switch (search.direction) {
       case 'up':
         originSegment = {
-          offset: search.activeRectangle.top,
-          start: search.activeRectangle.left, end: search.activeRectangle.right
+          offset: search.originRectangle.top,
+          start: search.originRectangle.left, end: search.originRectangle.right
         };
         getSegmentToCompare = function(rectangle) {
           return {
@@ -188,13 +224,13 @@
           };
         };
         isCandidate = function(rectangle) {
-          return search.activeRectangle.top > rectangle.top;
+          return search.originRectangle.top > rectangle.top;
         };
         break;
       case 'right':
         originSegment = {
-          offset: search.activeRectangle.right,
-          start: search.activeRectangle.top, end: search.activeRectangle.bottom
+          offset: search.originRectangle.right,
+          start: search.originRectangle.top, end: search.originRectangle.bottom
         };
         getSegmentToCompare = function (rectangle) {
           return {
@@ -203,13 +239,13 @@
           };
         };
         isCandidate = function (rectangle) {
-          return search.activeRectangle.left < rectangle.left;
+          return search.originRectangle.left < rectangle.left;
         };
         break;
       case 'down':
         originSegment = {
-          offset: search.activeRectangle.bottom,
-          start: search.activeRectangle.left, end: search.activeRectangle.right
+          offset: search.originRectangle.bottom,
+          start: search.originRectangle.left, end: search.originRectangle.right
         };
         getSegmentToCompare = function (rectangle) {
           return {
@@ -218,13 +254,13 @@
           };
         };
         isCandidate = function (rectangle) {
-          return search.activeRectangle.top < rectangle.top;
+          return search.originRectangle.top < rectangle.top;
         };
         break;
       case 'left':
         originSegment = {
-          offset: search.activeRectangle.left,
-          start: search.activeRectangle.top, end: search.activeRectangle.bottom
+          offset: search.originRectangle.left,
+          start: search.originRectangle.top, end: search.originRectangle.bottom
         };
         getSegmentToCompare = function (rectangle) {
           return {
@@ -233,7 +269,7 @@
           };
         };
         isCandidate = function (rectangle) {
-          return search.activeRectangle.left > rectangle.left;
+          return search.originRectangle.left > rectangle.left;
         };
         break;
       default:
@@ -317,16 +353,17 @@
       rectangle2.bottom === rectangle1.bottom;
   }
 
-  function createCursor(position) {
+  function createCursor(position, direction) {
     var element = document.createElement('span');
     var isDisposed = false;
     element.id = "spatial-chords-cursor";
     position = position || { left: window.innerWidth / 4, top: -1 };
-    document.body.appendChild(element);
+    direction = direction || "down";
     moveTo(position);
     return {
-      moveTo: moveTo,
       getRectangle: getRectangle.bind(window, element),
+      getDirection: function () { return direction; },
+      show: function () { document.body.appendChild(element); },
       dispose: dispose
     }
 
@@ -338,7 +375,8 @@
     function dispose() {
       if (isDisposed) return;
       isDisposed = true;
-      element.parentElement.removeChild(element);
+      if (element.parentElement != null)
+        element.parentElement.removeChild(element);
       element = null;
     }
   }
