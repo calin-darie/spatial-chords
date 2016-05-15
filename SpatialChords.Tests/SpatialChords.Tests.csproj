@@ -78,11 +78,14 @@
     <Content Include="changing-movement-axis.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="cursor-position-symetry.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="cursor-position-symmetry.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="highlighting-focused-element.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="origin-rectangle-size.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="sandboxed-frame-container-performance.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

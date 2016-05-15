@@ -28,7 +28,7 @@
         closestElement = closestInCurrentWindow.element;
 
         proposedCursor = createCursor(
-          proposeCursorPosition(closestElement, getAxis(search.direction), search.originRectangle),
+          proposeCursorPosition(closestElement, search),
           search.direction
         );
       
@@ -37,21 +37,61 @@
           data: { distance: result.distance }
         };
 
-        function proposeCursorPosition(proposedElement, searchAxis, searchOriginRectangle) {
-          if (proposedElement == null) return null; 
-
-          switch (searchAxis) {
-            case 'vertical':
-              return {
-                left: searchOriginRectangle.left,
-                top: getRectangle(proposedElement).top
-              }
-            case 'horizontal':
-              return {
-                left: getRectangle(proposedElement).left,
-                top: searchOriginRectangle.top
-              }
+        function proposeCursorPosition(proposedElement, search) {
+          if (proposedElement == null) return null;
+          var proposedElementRectangle = getRectangle(proposedElement);
+          var result = {};
+          switch (search.direction) {
+            case 'down':
+            case 'up': //remember row
+              result.left = search.originRectangle.left;
+              result.right = search.originRectangle.right;
+              break;
+            case 'right':
+            case 'left': //remember column
+              result.top = search.originRectangle.top;
+              result.bottom = search.originRectangle.bottom;
+              break;
           }
+          switch (search.direction) { 
+            case 'up':
+              if (proposedElementRectangle.bottom < search.originRectangle.top) {
+                result.top = proposedElementRectangle.top;
+                result.bottom = proposedElementRectangle.bottom;
+              } else {
+                result.top = search.originRectangle.top;
+                result.bottom = proposedElementRectangle.bottom;
+              }
+              break;
+            case 'down':
+              if (proposedElementRectangle.top > search.originRectangle.bottom) {
+                result.top = proposedElementRectangle.top;
+                result.bottom = proposedElementRectangle.bottom;
+              } else {
+                result.top = proposedElementRectangle.top;
+                result.bottom = search.originRectangle.bottom;
+              }
+              break;
+            case 'left':
+              if (proposedElementRectangle.right < search.originRectangle.left) {
+                result.left = proposedElementRectangle.left;
+                result.right = proposedElementRectangle.right;
+              } else {
+                result.left = search.originRectangle.left;
+                result.right = proposedElementRectangle.right;
+              }
+              break;
+            case 'right':
+              if (proposedElementRectangle.left > search.originRectangle.right) {
+                result.left = proposedElementRectangle.left;
+                result.right = proposedElementRectangle.right;
+              } else {
+                result.left = proposedElementRectangle.left;
+                result.right = search.originRectangle.right;
+              }
+              break;
+          }
+          return result;
         }
     },
     getContext: function (frame) {
@@ -357,7 +397,11 @@
     var element = document.createElement('span');
     var isDisposed = false;
     element.id = "spatial-chords-cursor";
-    position = position || { left: window.innerWidth / 4, top: -1 };
+    position = position || {};
+    position.left = typeof (position.left) ==='number'? position.left : window.innerWidth / 4;
+    position.top = typeof (position.top) === 'number'? position.top : 0;
+    position.right = typeof (position.right) === 'number'? position.right : position.left;
+    position.bottom = typeof (position.bottom) === 'number' ? position.bottom : position.top;
     direction = direction || "down";
     moveTo(position);
     return {
@@ -371,6 +415,8 @@
       element.style.position = "absolute";
       element.style.top = (position.top - currentDocumentAbsoluteOffset.top) + "px";
       element.style.left = (position.left - currentDocumentAbsoluteOffset.left) + "px";
+      element.style.height = (position.bottom - position.top) + "px";
+      element.style.width = (position.right - position.left) + "px";
     }
     function dispose() {
       if (isDisposed) return;

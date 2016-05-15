@@ -149,7 +149,7 @@ namespace SpatialChords.Tests
     [TestMethod]
     public void Given3NonCollinearElements_WhenPerformingOpposingActions_IAlwaysEndUpWhereIStartedFrom ()
     {
-      var testUrl = GetTestUrl("cursor-position-symetry.html");
+      var testUrl = GetTestUrl("cursor-position-symmetry.html");
       _driver.Navigate().GoToUrl(testUrl);
       SetInitialFocus("north");
 
@@ -185,6 +185,20 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("pivot", "down");
       Press(DirectionKey.Right);
       ExpectFocusMovesOn("beyondPivot", "right");
+    }
+
+
+    [TestMethod]
+    public void WhenComputingOriginRectangleThenRectangleOfElementNearCursorIsTakenIntoAccount()
+    {
+      var testUrl = GetTestUrl("origin-rectangle-size.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("north-east");
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("north-west", "left");
+
+      Press(DirectionKey.Right);
+      ExpectFocusMovesOn("north-east", "right");
     }
 
     private static Bitmap GetPageScreenshot()
