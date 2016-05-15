@@ -47,6 +47,7 @@ namespace SpatialChords.Tests
       SetInitialFocus("center");
 
       Press(DirectionKey.Up);
+      Press(DirectionKey.Up);
       ExpectFocusMovesOn("north", "up");
       Press(DirectionKey.Down);
       ExpectFocusMovesOn("center", "down");

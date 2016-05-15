@@ -17,10 +17,10 @@
     handle: function (search, context, currentClosest) {
       currentDocumentAbsoluteOffset = context.absolutePosition || defaultAbsoluteOffset;
       var closestInCurrentWindow = getClosestFocusableInCurrentWindow(search),
-        isUpdate = typeof currentClosest === "undefined" ||
-          currentClosest === null ||
+        isUpdate = closestInCurrentWindow.element != null &&
+          (typeof currentClosest === "undefined" || currentClosest === null ||
           typeof (currentClosest.distance) !== 'number' ||
-          closestInCurrentWindow.distance < currentClosest.distance,
+          closestInCurrentWindow.distance < currentClosest.distance),
         result = isUpdate
           ? closestInCurrentWindow
           : currentClosest;
@@ -187,6 +187,7 @@
       },
       'searchForClosest',
       function (match) {
+        if (typeof (match.data.distance) !== 'number') return;
         clearCursor();
         match.execute('focusClosest');
       }
