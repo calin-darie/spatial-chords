@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System;
 using System.Drawing;
+using OpenQA.Selenium.Interactions;
 
 namespace SpatialChords.Tests
 {
@@ -202,6 +203,20 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("north-east", "right");
     }
 
+    [TestMethod]
+    public void GivenOverlappedElementsThenNavigationGoesThroughAllOfThem()
+    {
+      var testUrl = GetTestUrl("overlapped-elements.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("first", "down");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("second", "down");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("third", "down");
+    }
+
     private static Bitmap GetPageScreenshot()
     {
       Screenshot screenShot = ((ITakesScreenshot)_driver).GetScreenshot();
@@ -211,8 +226,9 @@ namespace SpatialChords.Tests
 
     private void SetInitialFocus(string initiallyFocusedId)
     {
-      IWebElement centralElement = _driver.FindElement(By.Id(initiallyFocusedId));
-      centralElement.Click();
+      IWebElement element = _driver.FindElement(By.Id(initiallyFocusedId));
+      var actionsBuilder = new Actions(_driver);
+      actionsBuilder.MoveToElement(element, 1, 1).Click().Perform();
       ExpectFocusMovesOn(initiallyFocusedId, string.Format("clicked {0} element", initiallyFocusedId));
     }
 

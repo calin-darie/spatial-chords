@@ -55,40 +55,14 @@
           }
           switch (search.direction) { 
             case 'up':
-              if (proposedElementRectangle.bottom < search.originRectangle.top) {
-                result.top = proposedElementRectangle.top;
-                result.bottom = proposedElementRectangle.bottom;
-              } else {
-                result.top = search.originRectangle.top;
-                result.bottom = proposedElementRectangle.bottom;
-              }
-              break;
             case 'down':
-              if (proposedElementRectangle.top > search.originRectangle.bottom) {
-                result.top = proposedElementRectangle.top;
-                result.bottom = proposedElementRectangle.bottom;
-              } else {
-                result.top = proposedElementRectangle.top;
-                result.bottom = search.originRectangle.bottom;
-              }
+              result.top = proposedElementRectangle.top;
+              result.bottom = proposedElementRectangle.bottom;
               break;
             case 'left':
-              if (proposedElementRectangle.right < search.originRectangle.left) {
-                result.left = proposedElementRectangle.left;
-                result.right = proposedElementRectangle.right;
-              } else {
-                result.left = search.originRectangle.left;
-                result.right = proposedElementRectangle.right;
-              }
-              break;
             case 'right':
-              if (proposedElementRectangle.left > search.originRectangle.right) {
-                result.left = proposedElementRectangle.left;
-                result.right = proposedElementRectangle.right;
-              } else {
-                result.left = proposedElementRectangle.left;
-                result.right = search.originRectangle.right;
-              }
+              result.left = proposedElementRectangle.left;
+              result.right = proposedElementRectangle.right;
               break;
           }
           return result;
@@ -110,6 +84,7 @@
       if (typeof closestElement !== 'object' || closestElement === null) return;
       setCursor(proposedCursor);
       setActive(closestElement);
+      console.log('element: ', closestElement);
     },
     getContext: function () {
       return {};
@@ -123,11 +98,13 @@
     }
     cursor = newCursor;
     registerCursorFocusEvents();
+    console.log(' + creating cursor at ', cursor.getRectangle().top, cursor.getRectangle().left);
     newCursor.show();
   }
 
   function clearCursor() {
     if (cursor == null) return;
+    console.log('clearing cursor at ', cursor.getRectangle().top, cursor.getRectangle().left);
     cursor.dispose();
     unregisterCursorFocusEvents();
     cursor = null;
@@ -243,7 +220,7 @@
   };
 
   function getFocusableElements() {
-    var focusableElements = document.querySelectorAll("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex], *[contenteditable]");
+    var focusableElements = document.querySelectorAll("a[href], area[href], input:not([type='hidden']), select, textarea, button, object, embed, *[tabindex]:not(iframe), *[contenteditable]");
     return enumerable
       .from(focusableElements)
       .where(isFocusable)
@@ -255,7 +232,7 @@
     switch (search.direction) {
       case 'up':
         originSegment = {
-          offset: search.originRectangle.top,
+          offset: search.originRectangle.bottom,
           start: search.originRectangle.left, end: search.originRectangle.right
         };
         getSegmentToCompare = function(rectangle) {
@@ -265,12 +242,12 @@
           };
         };
         isCandidate = function(rectangle) {
-          return search.originRectangle.top > rectangle.top;
+          return search.originRectangle.bottom > rectangle.bottom;
         };
         break;
       case 'right':
         originSegment = {
-          offset: search.originRectangle.right,
+          offset: search.originRectangle.left,
           start: search.originRectangle.top, end: search.originRectangle.bottom
         };
         getSegmentToCompare = function (rectangle) {
@@ -285,7 +262,7 @@
         break;
       case 'down':
         originSegment = {
-          offset: search.originRectangle.bottom,
+          offset: search.originRectangle.top,
           start: search.originRectangle.left, end: search.originRectangle.right
         };
         getSegmentToCompare = function (rectangle) {
@@ -300,7 +277,7 @@
         break;
       case 'left':
         originSegment = {
-          offset: search.originRectangle.left,
+          offset: search.originRectangle.right,
           start: search.originRectangle.top, end: search.originRectangle.bottom
         };
         getSegmentToCompare = function (rectangle) {
@@ -310,7 +287,7 @@
           };
         };
         isCandidate = function (rectangle) {
-          return search.originRectangle.left > rectangle.left;
+          return search.originRectangle.right > rectangle.right;
         };
         break;
       default:
@@ -321,6 +298,13 @@
       distanceTo: function (rectangle) {
         var segmentToCompare = getSegmentToCompare(rectangle);
         var distance = distanceToOriginSegment(segmentToCompare);
+        var rowOrColumnLength = getAxis(search.direction) == 'horizontal' ?
+          Math.max(document.documentElement.scrollWidth, document.documentElement.clientWidth) :
+          Math.max(document.documentElement.scrollHeight, document.documentElement.clientHeight);
+        if (segmentToCompare.end <= originSegment.start || segmentToCompare.start >= originSegment.end) {
+          distance += rowOrColumnLength - originSegment.offset + //to reach this out-of-row element, it's like having to move the cursor all the way on the current row or column
+            Math.abs(segmentToCompare.offset - originSegment.offset) / Math.max(20, originSegment.end - originSegment.start) * rowOrColumnLength;//and then maybe some extra rows/cols
+        }
         return distance;
       },
       isCandidate: isCandidate
@@ -416,8 +400,8 @@
       element.style.position = "absolute";
       element.style.top = (position.top - currentDocumentAbsoluteOffset.top) + "px";
       element.style.left = (position.left - currentDocumentAbsoluteOffset.left) + "px";
-      element.style.height = (position.bottom - position.top) + "px";
-      element.style.width = (position.right - position.left) + "px";
+      element.style.height = (position.bottom - position.top + 1) + "px";
+      element.style.width = (position.right - position.left + 1) + "px";
     }
     function dispose() {
       if (isDisposed) return;
