@@ -1,12 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium;
 using System.Reflection;
 using System.IO;
-using System.Threading;
 using System;
 using System.Drawing;
 using OpenQA.Selenium.Interactions;
+using OpenQA.Selenium.Support.UI;
 
 namespace SpatialChords.Tests
 {
@@ -18,7 +19,7 @@ namespace SpatialChords.Tests
     static public void Initialize(TestContext c)
     {
       var options = new ChromeOptions();
-      var executingAssemblyFile = new System.Uri(Assembly.GetExecutingAssembly().CodeBase).AbsolutePath;
+      var executingAssemblyFile = new Uri(Assembly.GetExecutingAssembly().CodeBase).AbsolutePath;
       var executingAssemblyFolder = Path.GetDirectoryName(executingAssemblyFile);
       var extensionPath = Path.Combine(executingAssemblyFolder,
           @"..\SpatialChords\SpatialChords.zip");
@@ -32,12 +33,21 @@ namespace SpatialChords.Tests
       _driver.Dispose();
     }
 
-    public static class DirectionKey
+    public class DirectionKey
     {
-      public static string Up = "i";
-      public static string Down = "k";
-      public static string Right = "l";
-      public static string Left = "j";
+        public static DirectionKey Up = new DirectionKey("up", "i");
+        public static DirectionKey Down = new DirectionKey("down", "k");
+        public static DirectionKey Left = new DirectionKey("left", "j");
+        public static DirectionKey Right = new DirectionKey("right", "l");
+
+        public string Direction { get; private set; }
+        public string Key { get; private set; }
+
+        private DirectionKey(string direction, string key)
+        {
+            Direction = direction;
+            Key = key;
+        }
     }
 
     [TestMethod]
@@ -49,24 +59,24 @@ namespace SpatialChords.Tests
 
       Press(DirectionKey.Up);
       Press(DirectionKey.Up);
-      ExpectFocusMovesOn("north", "up");
+      ExpectFocusMovesOn("north");
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("center", "down");
+      ExpectFocusMovesOn("center");
 
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("south", "down");
+      ExpectFocusMovesOn("south");
       Press(DirectionKey.Up);
-      ExpectFocusMovesOn("center", "up");
+      ExpectFocusMovesOn("center");
 
       Press(DirectionKey.Left);
-      ExpectFocusMovesOn("west", "left");
+      ExpectFocusMovesOn("west");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("center", "right");
+      ExpectFocusMovesOn("center");
 
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("east", "right");
+      ExpectFocusMovesOn("east");
       Press(DirectionKey.Left);
-      ExpectFocusMovesOn("center", "left");
+      ExpectFocusMovesOn("center");
     }
 
 
@@ -78,9 +88,9 @@ namespace SpatialChords.Tests
       SetInitialFocus("center");
 
       Press(DirectionKey.Up);
-      ExpectFocusMovesOn("north", "up");
+      ExpectFocusMovesOn("north");
       Press(DirectionKey.Up);
-      ExpectFocusMovesOn("north", "up");
+      ExpectFocusMovesOn("north");
     }
 
     [TestMethod]
@@ -116,11 +126,11 @@ namespace SpatialChords.Tests
       
       Press(DirectionKey.Down);
       _driver.SwitchTo().Frame("nested");
-      ExpectFocusMovesOn("nestedFocusable", "down");
+      ExpectFocusMovesOn("nestedFocusable");
 
       Press(DirectionKey.Up);
       _driver.SwitchTo().ParentFrame();
-      ExpectFocusMovesOn("topFocusable", "up");
+      ExpectFocusMovesOn("topFocusable");
     }
 
     [TestMethod]
@@ -131,7 +141,7 @@ namespace SpatialChords.Tests
       SetInitialFocus("startingPoint");
 
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("destination", "down");
+      ExpectFocusMovesOn("destination");
     }
 
     [TestMethod]
@@ -142,10 +152,10 @@ namespace SpatialChords.Tests
       SetInitialFocus("start");
 
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("firstStep", "down", 999);
+      ExpectFocusMovesOn("firstStep", 999);
 
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("finish", "down", 99);
+      ExpectFocusMovesOn("finish");
     }
 
     [TestMethod]
@@ -156,9 +166,9 @@ namespace SpatialChords.Tests
       SetInitialFocus("north");
 
       Press(DirectionKey.Left);
-      ExpectFocusMovesOn("west", "left");
+      ExpectFocusMovesOn("west");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("north", "right");
+      ExpectFocusMovesOn("north");
     }
 
     [TestMethod]
@@ -184,9 +194,9 @@ namespace SpatialChords.Tests
       SetInitialFocus("origin");
 
       Press(DirectionKey.Down);
-      ExpectFocusMovesOn("pivot", "down");
+      ExpectFocusMovesOn("pivot");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("beyondPivot", "right");
+      ExpectFocusMovesOn("beyondPivot");
     }
 
 
@@ -197,24 +207,10 @@ namespace SpatialChords.Tests
       _driver.Navigate().GoToUrl(testUrl);
       SetInitialFocus("north-east");
       Press(DirectionKey.Left);
-      ExpectFocusMovesOn("north-west", "left");
+      ExpectFocusMovesOn("north-west");
 
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("north-east", "right");
-    }
-
-    [TestMethod]
-    public void GivenOverlappedElementsThenNavigationGoesThroughAllOfThem()
-    {
-      var testUrl = GetTestUrl("overlapped-elements.html");
-      _driver.Navigate().GoToUrl(testUrl);
-      SetInitialFocus("start");
-      Press(DirectionKey.Down);
-      ExpectFocusMovesOn("first", "down");
-      Press(DirectionKey.Down);
-      ExpectFocusMovesOn("second", "down");
-      Press(DirectionKey.Down);
-      ExpectFocusMovesOn("third", "down");
+      ExpectFocusMovesOn("north-east");
     }
 
     private static Bitmap GetPageScreenshot()
@@ -226,33 +222,30 @@ namespace SpatialChords.Tests
 
     private void SetInitialFocus(string initiallyFocusedId)
     {
+        Console.WriteLine("Start on {0} element. Clicking on it...", initiallyFocusedId);
       IWebElement element = _driver.FindElement(By.Id(initiallyFocusedId));
       var actionsBuilder = new Actions(_driver);
       actionsBuilder.MoveToElement(element, 1, 1).Click().Perform();
-      ExpectFocusMovesOn(initiallyFocusedId, string.Format("clicked {0} element", initiallyFocusedId));
+      ExpectFocusMovesOn(initiallyFocusedId);
     }
 
     private string GetTestUrl(string fileName)
     {
+      Console.WriteLine("Loading file {0}", fileName);
       return string.Format(@"file://{0}\{1}", Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
     }
 
-    private void ExpectFocusMovesOn(string elementId, string message, int timeoutMilliseconds = 99)
+    private void ExpectFocusMovesOn(string elementId, int timeoutMilliseconds = 99)
     {
-      RetryAssertAreEqual(elementId, GetActiveElementId, message, timeoutMilliseconds);
-    }
-
-    private void RetryAssertAreEqual(string expectedValue, Func<string> getActualValue, string message, int timeoutMilliseconds)
-    {
-      const int totalTries = 3;
-      string actualValue = null;
-      for (int triesLeft = totalTries; triesLeft > 0; triesLeft--)
+      var wait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(timeoutMilliseconds));
+      string activeElementId = null;
+      wait.Until(driver =>
       {
-        actualValue = getActualValue();
-        if (Equals(actualValue, expectedValue)) break;
-        Thread.Sleep(timeoutMilliseconds / totalTries);
-      }
-      Assert.AreEqual(expectedValue, actualValue, message);
+          activeElementId = GetActiveElementId();
+          return activeElementId == elementId;
+      });
+      Console.WriteLine("Expecting focus to move on {0}", elementId);
+      Assert.AreEqual(elementId, activeElementId);
     }
 
     private static string GetActiveElementId()
@@ -261,9 +254,10 @@ namespace SpatialChords.Tests
       return currentElement.GetAttribute("id");
     }
 
-    private void Press(string directionKey)
+    private void Press(DirectionKey directionKey)
     {
-      _driver.SwitchTo().ActiveElement().SendKeys(Keys.Alt + directionKey);
+      Console.WriteLine("Going {0}...", directionKey.Direction);
+      _driver.SwitchTo().ActiveElement().SendKeys(Keys.Alt + directionKey.Key);
     }
   }
 }
