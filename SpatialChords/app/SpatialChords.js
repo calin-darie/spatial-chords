@@ -303,7 +303,7 @@
           Math.max(document.documentElement.scrollHeight, document.documentElement.clientHeight);
         if (segmentToCompare.end <= originSegment.start || segmentToCompare.start >= originSegment.end) {
           distance += rowOrColumnLength - originSegment.offset + //to reach this out-of-row element, it's like having to move the cursor all the way on the current row or column
-            Math.abs(segmentToCompare.offset - originSegment.offset) / Math.max(20, originSegment.end - originSegment.start) * rowOrColumnLength;//and then maybe some extra rows/cols
+            Math.abs(segmentToCompare.offset - originSegment.offset) / Math.max(20, Math.abs(originSegment.end - originSegment.start)) * rowOrColumnLength;//and then maybe some extra rows/cols
         }
         return distance;
       },
@@ -382,6 +382,7 @@
     var element = document.createElement('span');
     var isDisposed = false;
     element.id = "spatial-chords-cursor";
+    element.classList.add(direction);
     position = position || {};
     position.left = typeof (position.left) ==='number'? position.left : window.innerWidth / 4;
     position.top = typeof (position.top) === 'number'? position.top : 0;

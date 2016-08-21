@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium;
@@ -211,6 +213,20 @@ namespace SpatialChords.Tests
 
       Press(DirectionKey.Right);
       ExpectFocusMovesOn("north-east");
+    }
+
+    [TestMethod]
+    public void GivenOverlappedElementsThenNavigationGoesThroughAllOfThem()
+    {
+      var testUrl = GetTestUrl("overlapped-elements.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("first");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("second");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("third");
     }
 
     private static Bitmap GetPageScreenshot()
