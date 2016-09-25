@@ -1,5 +1,6 @@
 ﻿(function () {
-  var closestElement, proposedCursor,
+  var cursorHeight = 15,
+    closestElement, proposedCursor,
     defaultAbsoluteOffset = {
       left: 0,
       top: 0
@@ -16,57 +17,44 @@
   windowMessaging.handlers.searchForClosest = {
     handle: function (search, context, currentClosest) {
       currentDocumentAbsoluteOffset = context.absolutePosition || defaultAbsoluteOffset;
-      var closestInCurrentWindow = getClosestFocusableInCurrentWindow(search),
+      var closestInCurrentWindow = getClosestFocusableInWindow(search),
         isUpdate = closestInCurrentWindow.element != null &&
           (typeof currentClosest === "undefined" || currentClosest === null ||
-          typeof (currentClosest.distance) !== 'number' ||
-          closestInCurrentWindow.distance < currentClosest.distance),
+          typeof (currentClosest.distances) !== 'object' ||
+          distanceLessThan(closestInCurrentWindow.distances, currentClosest.distances)),
         result = isUpdate
           ? closestInCurrentWindow
           : currentClosest;
 
-        closestElement = closestInCurrentWindow.element;
+      closestElement = closestInCurrentWindow.element;
 
-        proposedCursor = createCursor(
-          proposeCursorPosition(closestElement, search),
-          search.direction
-        );
-      
-        return {
-          isUpdate: isUpdate,
-          data: { distance: result.distance }
+      proposedCursorPosition = proposeCursorPosition(closestElement, search);
+      console.log('proposed position: ', proposedCursorPosition);
+
+      proposedCursor = createCursor(
+        proposedCursorPosition,
+        search.direction
+      );
+
+      return {
+        isUpdate: isUpdate,
+        data: { distances: result.distances }
+      };
+
+      function proposeCursorPosition(proposedElement, search) {
+        if (proposedElement == null) return null;
+        var proposedElementRectangle = getRectangle(proposedElement);
+        var left = getAxis(search.direction) === "vertical"? 
+          search.originRectangle.left :
+          proposedElementRectangle.left;
+        var proposedPosition = {
+          left: left,
+          right: left + 1,
+          top: proposedElementRectangle.top,
+          bottom: Math.min(proposedElementRectangle.top + cursorHeight, proposedElementRectangle.bottom)
         };
-
-        function proposeCursorPosition(proposedElement, search) {
-          if (proposedElement == null) return null;
-          var proposedElementRectangle = getRectangle(proposedElement);
-          var result = {};
-          switch (search.direction) {
-            case 'down':
-            case 'up': //remember row
-              result.left = search.originRectangle.left;
-              result.right = search.originRectangle.right;
-              break;
-            case 'right':
-            case 'left': //remember column
-              result.top = search.originRectangle.top;
-              result.bottom = search.originRectangle.bottom;
-              break;
-          }
-          switch (search.direction) { 
-            case 'up':
-            case 'down':
-              result.top = proposedElementRectangle.top;
-              result.bottom = proposedElementRectangle.bottom;
-              break;
-            case 'left':
-            case 'right':
-              result.left = proposedElementRectangle.left;
-              result.right = proposedElementRectangle.right;
-              break;
-          }
-          return result;
-        }
+        return proposedPosition;
+      }
     },
     getContext: function (frame) {
       var frameRectangle = getRectangle(frame);
@@ -78,7 +66,7 @@
       };
     }
   };
-
+  
   windowMessaging.handlers.focusClosest = {
     handle: function () {
       if (typeof closestElement !== 'object' || closestElement === null) return;
@@ -153,7 +141,7 @@
   };
 
   function go(direction) {
-    if (cursor == null) return null;
+    if (cursor == null) return;
 
     windowMessaging.searchAll(
       {
@@ -163,13 +151,16 @@
           getRectangle(document.activeElement)
       },
       'searchForClosest',
-      function (match) {
-        if (typeof (match.data.distance) !== 'number') return;
-        clearCursor();
-        match.execute('focusClosest');
+      function(match) {
+        var newLineCriteria;
+        if (typeof (match.data.distances) === 'object') {
+          clearCursor();
+          match.execute('focusClosest');
+          return;
+        }
       }
     );
-  }
+  };
 
   function getAxis(direction) {
     switch (direction) {
@@ -182,7 +173,7 @@
       default:
         throw "invalid direction '" + direction + "'";
     }
-  }
+  };
 
   function setActive(e) {
     var cur = document.activeElement;
@@ -192,27 +183,34 @@
     registerCursorFocusEvents();
   };
 
-  function getClosestFocusableInCurrentWindow(search) {
+  
+
+  function getClosestFocusableInWindow(search) {
     var strategy = createStrategy(search);
     var focusableElements = getFocusableElements();
     var focusable,
       rectangle,
       i,
-      distance,
+      distances,
       currentClosest = {
         element: null,
-        distance: Infinity
+        distances: { onMovementAxis: Infinity, deviationFromAxis: Infinity }
       };
     for (i = 0; i < focusableElements.length; i++) {
       focusable = focusableElements[i];
       rectangle = getRectangle(focusable);
+      //console.log(focusable, rectangle);
       if (rectanglesAreEqual(rectangle, search.originRectangle) ||
-        !strategy.isCandidate(rectangle)) continue;
-      distance = strategy.distanceTo(rectangle);
-      if (distance < currentClosest.distance) {
+        !strategy.isCandidate(rectangle)) {
+        //console.log('not a candidate'); 
+        continue;
+      }
+      distances = strategy.distancesTo(rectangle);
+      //console.log('candidate: ', distances);
+      if (distanceLessThan(distances, currentClosest.distances)) {
         currentClosest = {
           element: focusable,
-          distance: distance
+          distances: distances
         };
       }
     }
@@ -228,109 +226,120 @@
   };
 
   function createStrategy(search) {
-    var originSegment, getSegmentToCompare, isCandidate;
     switch (search.direction) {
-      case 'up':
-        originSegment = {
-          offset: search.originRectangle.bottom,
-          start: search.originRectangle.left, end: search.originRectangle.right
-        };
-        getSegmentToCompare = function(rectangle) {
-          return {
-            offset: rectangle.bottom,
-            start: rectangle.left, end: rectangle.right
-          };
-        };
-        isCandidate = function(rectangle) {
-          return search.originRectangle.bottom > rectangle.bottom;
-        };
-        break;
-      case 'right':
-        originSegment = {
-          offset: search.originRectangle.left,
-          start: search.originRectangle.top, end: search.originRectangle.bottom
-        };
-        getSegmentToCompare = function (rectangle) {
-          return {
-            offset: rectangle.left,
-            start: rectangle.top, end: rectangle.bottom
-          };
-        };
-        isCandidate = function (rectangle) {
-          return search.originRectangle.left < rectangle.left;
-        };
-        break;
-      case 'down':
-        originSegment = {
-          offset: search.originRectangle.top,
-          start: search.originRectangle.left, end: search.originRectangle.right
-        };
-        getSegmentToCompare = function (rectangle) {
-          return {
-            offset: rectangle.top,
-            start: rectangle.left, end: rectangle.right
-          };
-        };
-        isCandidate = function (rectangle) {
-          return search.originRectangle.top < rectangle.top;
-        };
-        break;
       case 'left':
-        originSegment = {
-          offset: search.originRectangle.right,
-          start: search.originRectangle.top, end: search.originRectangle.bottom
+        return {
+          distancesTo: function (rectangle) {
+            return areOnSameRow(rectangle, search.originRectangle)? {
+              deviationFromAxis: 0,
+              onMovementAxis: search.originRectangle.right - rectangle.right
+            } : {
+              deviationFromAxis: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
+              onMovementAxis: -rectangle.right
+            };
+          },
+          isCandidate: function(rectangle) {
+            return areOnSameRow(rectangle, search.originRectangle)?
+              rectangle.right < search.originRectangle.right :
+              isOnHigherRow(rectangle, search.originRectangle);
+          }
         };
-        getSegmentToCompare = function (rectangle) {
-          return {
-            offset: rectangle.right,
-            start: rectangle.top, end: rectangle.bottom
-          };
+      case 'right':
+        return {
+          distancesTo: function(rectangle) {
+            return areOnSameRow(rectangle, search.originRectangle) ? {
+              deviationFromAxis: 0,
+              onMovementAxis: rectangle.left - search.originRectangle.left
+            } : {
+              deviationFromAxis: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
+              onMovementAxis: rectangle.left
+            };
+          },
+          isCandidate: function(rectangle) {
+            return areOnSameRow(rectangle, search.originRectangle)? 
+              rectangle.left > search.originRectangle.left :
+              isOnLowerRow(rectangle, search.originRectangle);
+          }
         };
-        isCandidate = function (rectangle) {
-          return search.originRectangle.right > rectangle.right;
+      case 'up':
+        return {
+          distancesTo: function (rectangle) {
+            return {
+              deviationFromAxis: search.originRectangle.bottom - rectangle.bottom,
+              onMovementAxis: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
+            };
+          },
+          isCandidate: function (rectangle) {
+            return isOnHigherRow(rectangle, search.originRectangle);
+          }
         };
-        break;
+      case 'down':
+        return {
+          distancesTo: function (rectangle) {
+            return {
+              deviationFromAxis: rectangle.top - search.originRectangle.top,
+              onMovementAxis: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
+            };
+          },
+          isCandidate: function (rectangle) {
+            return isOnLowerRow(rectangle, search.originRectangle);
+          }
+        };
       default:
         throw new Error('unsupported direction');
     }
 
-    return {
-      distanceTo: function (rectangle) {
-        var segmentToCompare = getSegmentToCompare(rectangle);
-        var distance = distanceToOriginSegment(segmentToCompare);
-        var rowOrColumnLength = getAxis(search.direction) == 'horizontal' ?
-          Math.max(document.documentElement.scrollWidth, document.documentElement.clientWidth) :
-          Math.max(document.documentElement.scrollHeight, document.documentElement.clientHeight);
-        if (segmentToCompare.end <= originSegment.start || segmentToCompare.start >= originSegment.end) {
-          distance += rowOrColumnLength - originSegment.offset + //to reach this out-of-row element, it's like having to move the cursor all the way on the current row or column
-            Math.abs(segmentToCompare.offset - originSegment.offset) / Math.max(20, Math.abs(originSegment.end - originSegment.start)) * rowOrColumnLength;//and then maybe some extra rows/cols
+    function areOnSameRow(rectangle, otherRectangle) {
+      return !(isOnHigherRow(rectangle, otherRectangle) || isOnLowerRow(rectangle, otherRectangle));
+    }
+    function isOnHigherRow(rectangle, otherRectangle) {
+      return rectangle.bottom <= otherRectangle.top;
+    }
+    function isOnLowerRow(rectangle, otherRectangle) {
+      return rectangle.top >= otherRectangle.bottom;
+    }
+
+    function getDeviationFromVerticalAxis(rectangle, axis) {
+      if (rectangle.left <= axis && axis <= rectangle.right) return 0;
+      return Math.min(Math.abs(rectangle.left - axis), Math.abs(rectangle.right - axis));
+    };
+  };
+
+  function createNewLineStrategy(search) {
+    switch (search.criteria) {
+    case 'firstLineUpRightmost':
+      return {
+        distancesTo: function(rectangle) {
+          return {
+            deviationFromAxis: search.originRectangle.bottom - rectangle.bottom,
+            onMovementAxis: -rectangle.left
+          };
+        },
+        isCandidate: function(rectangle) {
+          return search.originRectangle.bottom > rectangle.bottom;
         }
-        return distance;
-      },
-      isCandidate: isCandidate
-    }
-
-    function euclidianDistanceBetween(position1, position2) {
-      return Math.sqrt(
-        Math.pow(position1.left - position2.left, 2) +
-        Math.pow(position1.top - position2.top, 2));
-    }
-
-    function distanceToOriginSegment(segment) {
-      if (segment.end <= originSegment.start)
-        return euclidianDistanceBetween(
-          { top: segment.offset, left: segment.end },
-          { top: originSegment.offset, left: originSegment.start }
-        );
-      else if (segment.start >= originSegment.end)
-        return euclidianDistanceBetween(
-          { top: segment.offset, left: segment.start },
-          { top: originSegment.offset, left: originSegment.end }
-        );
-      else
-        return Math.abs(segment.offset - originSegment.offset);
+      };
+    case 'firstLineDownLeftmost':
+      return {
+        distancesTo: function(rectangle) {
+          return {
+            Y: rectangle.top - search.originRectangle.top,
+            X: rectangle.left
+        };
+        },
+        isCandidate: function(rectangle) {
+          return rectangle.top > search.originRectangle.top;
+        }
+      };
+    default:
+      throw new Error('unsupported criteria');
     }
   };
+
+  function distanceLessThan(distance, otherDistances) {
+    return distance.deviationFromAxis < otherDistances.deviationFromAxis ||
+      (distance.deviationFromAxis == otherDistances.deviationFromAxis && distance.onMovementAxis < otherDistances.onMovementAxis);
+  }
 
   function getRectangle(e) {
     var left = currentDocumentAbsoluteOffset.left,

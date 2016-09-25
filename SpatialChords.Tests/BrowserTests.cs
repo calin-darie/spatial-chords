@@ -106,16 +106,12 @@ namespace SpatialChords.Tests
       for (var i = 1; i <= 17; i++)
       {
         if (i == 18) _driver.SwitchTo().Frame("nested");
-        const string testDescription = "data-test-description";
         Press(DirectionKey.Down);
         string id = "focusable" + i;
-        IWebElement currentElement = _driver.SwitchTo().ActiveElement();
-        string actualId = currentElement.GetAttribute("id");
-        string expectedDescription = _driver.FindElement(By.Id(id)).GetAttribute(testDescription);
-        string actualDescription = currentElement.GetAttribute(testDescription);
-        Assert.AreEqual(id, actualId, string.Format("expected: {0}[{1}], actual:{2}[{3}]", 
-          expectedDescription, id, 
-          actualDescription, actualId));
+        ExpectFocusMovesOn(id);
+        //const string testDescription = "data-test-description";
+        //todo: string expectedDescription = _driver.FindElement(By.Id(id)).GetAttribute(testDescription);
+        //string actualDescription = currentElement.GetAttribute(testDescription);
       }
     }
 
@@ -128,7 +124,7 @@ namespace SpatialChords.Tests
       
       Press(DirectionKey.Down);
       _driver.SwitchTo().Frame("nested");
-      ExpectFocusMovesOn("nestedFocusable");
+      ExpectFocusMovesOn("nestedFocusable", 2000);
 
       Press(DirectionKey.Up);
       _driver.SwitchTo().ParentFrame();
@@ -165,12 +161,12 @@ namespace SpatialChords.Tests
     {
       var testUrl = GetTestUrl("cursor-position-symmetry.html");
       _driver.Navigate().GoToUrl(testUrl);
-      SetInitialFocus("north");
+      SetInitialFocus("west");
 
-      Press(DirectionKey.Left);
-      ExpectFocusMovesOn("west");
-      Press(DirectionKey.Right);
+      Press(DirectionKey.Up);
       ExpectFocusMovesOn("north");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("west");
     }
 
     [TestMethod]
@@ -221,12 +217,38 @@ namespace SpatialChords.Tests
       var testUrl = GetTestUrl("overlapped-elements.html");
       _driver.Navigate().GoToUrl(testUrl);
       SetInitialFocus("start");
-      Press(DirectionKey.Down);
+      Press(DirectionKey.Right);
       ExpectFocusMovesOn("first");
-      Press(DirectionKey.Down);
+      Press(DirectionKey.Right);
       ExpectFocusMovesOn("second");
-      Press(DirectionKey.Down);
+      Press(DirectionKey.Right);
       ExpectFocusMovesOn("third");
+    }
+
+    [TestMethod]
+    public void GivenElementsOverMultipleLinesThenCursorWrapsToBeginingOfNextLineOrEndOfPreviousLine()
+    {
+      var testUrl = GetTestUrl("cursor-moves-like-caret.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+      for (var i = 1; i <= 9; i++)
+      {
+        Press(DirectionKey.Right);
+        var expectedlinkId = string.Format("l{0:d2}", i);
+        ExpectFocusMovesOn(expectedlinkId);
+      }
+
+      for (var i = 8; i >= 1; i--)
+      {
+        Press(DirectionKey.Left);
+        var expectedlinkId = string.Format("l{0:d2}", i);
+        ExpectFocusMovesOn(expectedlinkId);
+      }
+
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("start");
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("start");
     }
 
     private static Bitmap GetPageScreenshot()
