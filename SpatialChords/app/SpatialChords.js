@@ -194,7 +194,7 @@
       distances,
       currentClosest = {
         element: null,
-        distances: { onMovementAxis: Infinity, deviationFromAxis: Infinity }
+        distances: { horizontal: Infinity, vertical: Infinity }
       };
     for (i = 0; i < focusableElements.length; i++) {
       focusable = focusableElements[i];
@@ -231,11 +231,11 @@
         return {
           distancesTo: function (rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)? {
-              deviationFromAxis: 0,
-              onMovementAxis: search.originRectangle.right - rectangle.right
+              vertical: 0,
+              horizontal: search.originRectangle.right - rectangle.right
             } : {
-              deviationFromAxis: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
-              onMovementAxis: -rectangle.right
+              vertical: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
+              horizontal: -rectangle.right
             };
           },
           isCandidate: function(rectangle) {
@@ -248,11 +248,11 @@
         return {
           distancesTo: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle) ? {
-              deviationFromAxis: 0,
-              onMovementAxis: rectangle.left - search.originRectangle.left
+              vertical: 0,
+              horizontal: rectangle.left - search.originRectangle.left
             } : {
-              deviationFromAxis: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
-              onMovementAxis: rectangle.left
+              vertical: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
+              horizontal: rectangle.left
             };
           },
           isCandidate: function(rectangle) {
@@ -265,8 +265,8 @@
         return {
           distancesTo: function (rectangle) {
             return {
-              deviationFromAxis: search.originRectangle.bottom - rectangle.bottom,
-              onMovementAxis: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
+              vertical: search.originRectangle.bottom - rectangle.bottom,
+              horizontal: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
             };
           },
           isCandidate: function (rectangle) {
@@ -277,8 +277,8 @@
         return {
           distancesTo: function (rectangle) {
             return {
-              deviationFromAxis: rectangle.top - search.originRectangle.top,
-              onMovementAxis: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
+              vertical: rectangle.top - search.originRectangle.top,
+              horizontal: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
             };
           },
           isCandidate: function (rectangle) {
@@ -305,40 +305,9 @@
     };
   };
 
-  function createNewLineStrategy(search) {
-    switch (search.criteria) {
-    case 'firstLineUpRightmost':
-      return {
-        distancesTo: function(rectangle) {
-          return {
-            deviationFromAxis: search.originRectangle.bottom - rectangle.bottom,
-            onMovementAxis: -rectangle.left
-          };
-        },
-        isCandidate: function(rectangle) {
-          return search.originRectangle.bottom > rectangle.bottom;
-        }
-      };
-    case 'firstLineDownLeftmost':
-      return {
-        distancesTo: function(rectangle) {
-          return {
-            Y: rectangle.top - search.originRectangle.top,
-            X: rectangle.left
-        };
-        },
-        isCandidate: function(rectangle) {
-          return rectangle.top > search.originRectangle.top;
-        }
-      };
-    default:
-      throw new Error('unsupported criteria');
-    }
-  };
-
   function distanceLessThan(distance, otherDistances) {
-    return distance.deviationFromAxis < otherDistances.deviationFromAxis ||
-      (distance.deviationFromAxis == otherDistances.deviationFromAxis && distance.onMovementAxis < otherDistances.onMovementAxis);
+    return distance.vertical < otherDistances.vertical ||
+      (distance.vertical == otherDistances.vertical && distance.horizontal < otherDistances.horizontal);
   }
 
   function getRectangle(e) {
