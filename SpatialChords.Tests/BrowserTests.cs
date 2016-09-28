@@ -216,13 +216,22 @@ namespace SpatialChords.Tests
     {
       var testUrl = GetTestUrl("overlapped-elements.html");
       _driver.Navigate().GoToUrl(testUrl);
-      SetInitialFocus("start");
+
+      SetInitialFocus("hStart");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("first");
+      ExpectFocusMovesOn("hFirst");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("second");
+      ExpectFocusMovesOn("hSecond");
       Press(DirectionKey.Right);
-      ExpectFocusMovesOn("third");
+      ExpectFocusMovesOn("hThird");
+      
+      SetInitialFocus("vStart");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("vFirst");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("vSecond");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("vThird");
     }
 
     [TestMethod]

@@ -29,7 +29,6 @@
       closestElement = closestInCurrentWindow.element;
 
       proposedCursorPosition = proposeCursorPosition(closestElement, search);
-      console.log('proposed position: ', proposedCursorPosition);
 
       proposedCursor = createCursor(
         proposedCursorPosition,
@@ -42,17 +41,24 @@
       };
 
       function proposeCursorPosition(proposedElement, search) {
+        var proposedPosition,
+          proposedElementRectangle;
         if (proposedElement == null) return null;
-        var proposedElementRectangle = getRectangle(proposedElement);
-        var left = getAxis(search.direction) === "vertical"? 
-          search.originRectangle.left :
-          proposedElementRectangle.left;
-        var proposedPosition = {
-          left: left,
-          right: left + 1,
-          top: proposedElementRectangle.top,
-          bottom: Math.min(proposedElementRectangle.top + cursorHeight, proposedElementRectangle.bottom)
-        };
+        switch (search.direction) {
+          case "up":
+          case "down":
+            proposedElementRectangle = getRectangle(proposedElement);
+            proposedPosition = {
+              left: search.originRectangle.left,
+              right: Math.max(search.originRectangle.right, proposedElementRectangle.right),
+              top: proposedElementRectangle.top,
+              bottom: proposedElementRectangle.bottom,
+            };
+            break;
+          default:
+            proposedPosition = getCursorPositionForElementAsOrigin(proposedElement);
+            break;
+        }
         return proposedPosition;
       }
     },
@@ -72,7 +78,6 @@
       if (typeof closestElement !== 'object' || closestElement === null) return;
       setCursor(proposedCursor);
       setActive(closestElement);
-      console.log('element: ', closestElement);
     },
     getContext: function () {
       return {};
@@ -92,7 +97,6 @@
 
   function clearCursor() {
     if (cursor == null) return;
-    console.log('clearing cursor at ', cursor.getRectangle().top, cursor.getRectangle().left);
     cursor.dispose();
     unregisterCursorFocusEvents();
     cursor = null;
@@ -194,19 +198,24 @@
       distances,
       currentClosest = {
         element: null,
-        distances: { horizontal: Infinity, vertical: Infinity }
-      };
+        distances: { primary: Infinity, secondary: Infinity }
+      }, 
+      activeElementRectangle = typeof(document.activeElement) === 'object'? 
+        getRectangle(document.activeElement):
+        {left:-1, top:-1, right:-1, bottom:-1};
     for (i = 0; i < focusableElements.length; i++) {
       focusable = focusableElements[i];
       rectangle = getRectangle(focusable);
-      //console.log(focusable, rectangle);
-      if (rectanglesAreEqual(rectangle, search.originRectangle) ||
+
+      console.log(focusable, rectangle);
+      
+      if (rectanglesAreEqual(rectangle, activeElementRectangle) ||
         !strategy.isCandidate(rectangle)) {
-        //console.log('not a candidate'); 
+        console.log('not a candidate'); 
         continue;
       }
       distances = strategy.distancesTo(rectangle);
-      //console.log('candidate: ', distances);
+      console.log('candidate: ', distances);
       if (distanceLessThan(distances, currentClosest.distances)) {
         currentClosest = {
           element: focusable,
@@ -231,16 +240,16 @@
         return {
           distancesTo: function (rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)? {
-              vertical: 0,
-              horizontal: search.originRectangle.right - rectangle.right
+              primary: 0,
+              secondary: search.originRectangle.right - rectangle.right
             } : {
-              vertical: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
-              horizontal: -rectangle.right
+              primary: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
+              secondary: -rectangle.right
             };
           },
           isCandidate: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)?
-              rectangle.right < search.originRectangle.right :
+              rectangle.right <= search.originRectangle.right :
               isOnHigherRow(rectangle, search.originRectangle);
           }
         };
@@ -248,41 +257,55 @@
         return {
           distancesTo: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle) ? {
-              vertical: 0,
-              horizontal: rectangle.left - search.originRectangle.left
+              primary: 0,
+              secondary: rectangle.left - search.originRectangle.left
             } : {
-              vertical: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
-              horizontal: rectangle.left
+              primary: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
+              secondary: rectangle.left
             };
           },
           isCandidate: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)? 
-              rectangle.left > search.originRectangle.left :
+              rectangle.left >= search.originRectangle.left :
               isOnLowerRow(rectangle, search.originRectangle);
           }
         };
       case 'up':
         return {
           distancesTo: function (rectangle) {
-            return {
-              vertical: search.originRectangle.bottom - rectangle.bottom,
-              horizontal: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
-            };
+            return areOnSameRow(rectangle, search.originRectangle) ?
+              {
+                primary: getHorizontalDeviation(rectangle, search.originRectangle.left),
+                secondary: search.originRectangle.top - rectangle.top
+              }
+              :
+              {
+                primary: search.originRectangle.bottom - rectangle.bottom,
+                secondary: getHorizontalDeviation(rectangle, search.originRectangle.left)
+              };
           },
           isCandidate: function (rectangle) {
-            return isOnHigherRow(rectangle, search.originRectangle);
+            return isOnHigherRow(rectangle, search.originRectangle)
+              || (areOnSameRow(rectangle, search.originRectangle) && rectangle.top < search.originRectangle.top);
           }
         };
       case 'down':
         return {
           distancesTo: function (rectangle) {
-            return {
-              vertical: rectangle.top - search.originRectangle.top,
-              horizontal: getDeviationFromVerticalAxis(rectangle, search.originRectangle.left)
-            };
+            return areOnSameRow(rectangle, search.originRectangle) ?
+              {
+                primary: getHorizontalDeviation(rectangle, search.originRectangle.left),
+                secondary: rectangle.top - search.originRectangle.top
+              }
+              :
+              {
+                primary: rectangle.top - search.originRectangle.top,
+                secondary: getHorizontalDeviation(rectangle, search.originRectangle.left)
+              };
           },
           isCandidate: function (rectangle) {
-            return isOnLowerRow(rectangle, search.originRectangle);
+            return isOnLowerRow(rectangle, search.originRectangle)
+              || (areOnSameRow(rectangle, search.originRectangle) && rectangle.top > search.originRectangle.top);
           }
         };
       default:
@@ -299,15 +322,15 @@
       return rectangle.top >= otherRectangle.bottom;
     }
 
-    function getDeviationFromVerticalAxis(rectangle, axis) {
+    function getHorizontalDeviation(rectangle, axis) {
       if (rectangle.left <= axis && axis <= rectangle.right) return 0;
       return Math.min(Math.abs(rectangle.left - axis), Math.abs(rectangle.right - axis));
     };
   };
 
   function distanceLessThan(distance, otherDistances) {
-    return distance.vertical < otherDistances.vertical ||
-      (distance.vertical == otherDistances.vertical && distance.horizontal < otherDistances.horizontal);
+    return distance.primary < otherDistances.primary ||
+      (distance.primary == otherDistances.primary && distance.secondary < otherDistances.secondary);
   }
 
   function getRectangle(e) {
