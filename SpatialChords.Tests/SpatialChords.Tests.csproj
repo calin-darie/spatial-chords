@@ -75,6 +75,9 @@
     <Content Include="bug-ignoring-cursor-resolution-when-moving-down.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="bug-overlapped-elements-infinite-loop.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="css-nav-cardinal-points.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

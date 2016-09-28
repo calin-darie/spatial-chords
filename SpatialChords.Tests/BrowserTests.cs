@@ -302,6 +302,18 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("nextRowDownClose");
     }
 
+    [TestMethod]
+    public void GivenVerticallyAlignedOverlappedElements_MovingLeftRight_AvoidLoops()
+    {
+      var testUrl = GetTestUrl("bug-overlapped-elements-infinite-loop.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+
+      Press(DirectionKey.Left);
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("inaccessible");
+    }
+
     private static Bitmap GetPageScreenshot()
     {
       Screenshot screenShot = ((ITakesScreenshot)_driver).GetScreenshot();
@@ -328,11 +340,17 @@ namespace SpatialChords.Tests
     {
       var wait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(timeoutMilliseconds));
       string activeElementId = null;
-      wait.Until(driver =>
+      try
       {
+        wait.Until(driver =>
+        {
           activeElementId = GetActiveElementId();
           return activeElementId == elementId;
-      });
+        });
+      }
+      catch
+      {
+      }
       Console.WriteLine("Expecting focus to move on {0}", elementId);
       Assert.AreEqual(elementId, activeElementId);
     }

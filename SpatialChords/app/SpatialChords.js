@@ -244,7 +244,9 @@
           },
           isCandidate: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)?
-              rectangle.right <= search.originRectangle.right :
+              rectangle.right < search.originRectangle.right ||
+              (rectangle.right < search.originRectangle.right && rectangle.top < search.originRectangle.top)
+              :
               isOnHigherRow(rectangle, search.originRectangle);
           }
         };
@@ -261,7 +263,9 @@
           },
           isCandidate: function(rectangle) {
             return areOnSameRow(rectangle, search.originRectangle)? 
-              rectangle.left >= search.originRectangle.left :
+              rectangle.left > search.originRectangle.left ||
+              (rectangle.left == search.originRectangle.left && rectangle.top < originRectangle.top)
+              :
               isOnLowerRow(rectangle, search.originRectangle);
           }
         };
