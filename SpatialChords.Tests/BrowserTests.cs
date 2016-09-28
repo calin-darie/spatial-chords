@@ -289,6 +289,19 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("start");
     }
 
+
+    [TestMethod]
+    public void GivenTwoElementsWithinVerticalCursorResolution_PressingDown_ElementsAreConsideredAtSameDistance()
+    {
+      //todo: force improved implementation
+      var testUrl = GetTestUrl("bug-ignoring-cursor-resolution-when-moving-down.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("start");
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("nextRowDownClose");
+    }
+
     private static Bitmap GetPageScreenshot()
     {
       Screenshot screenShot = ((ITakesScreenshot)_driver).GetScreenshot();

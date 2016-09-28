@@ -1,5 +1,5 @@
 ﻿(function () {
-  var cursorHeight = 15,
+  var cursorResolution = 25,
     closestElement, proposedCursor,
     defaultAbsoluteOffset = {
       left: 0,
@@ -91,7 +91,6 @@
     }
     cursor = newCursor;
     registerCursorFocusEvents();
-    console.log(' + creating cursor at ', cursor.getRectangle().top, cursor.getRectangle().left);
     newCursor.show();
   }
 
@@ -206,16 +205,12 @@
     for (i = 0; i < focusableElements.length; i++) {
       focusable = focusableElements[i];
       rectangle = getRectangle(focusable);
-
-      console.log(focusable, rectangle);
-      
+            
       if (rectanglesAreEqual(rectangle, activeElementRectangle) ||
         !strategy.isCandidate(rectangle)) {
-        console.log('not a candidate'); 
         continue;
       }
       distances = strategy.distancesTo(rectangle);
-      console.log('candidate: ', distances);
       if (distanceLessThan(distances, currentClosest.distances)) {
         currentClosest = {
           element: focusable,
@@ -243,7 +238,7 @@
               primary: 0,
               secondary: search.originRectangle.right - rectangle.right
             } : {
-              primary: Math.floor((search.originRectangle.top - rectangle.top) / cursorHeight + 1) * cursorHeight,
+              primary: Math.floor((search.originRectangle.top - rectangle.top) / cursorResolution + 1) * cursorResolution,
               secondary: -rectangle.right
             };
           },
@@ -260,7 +255,7 @@
               primary: 0,
               secondary: rectangle.left - search.originRectangle.left
             } : {
-              primary: Math.floor((rectangle.top - search.originRectangle.top) / cursorHeight + 1) * cursorHeight,
+              primary: Math.floor((rectangle.top - search.originRectangle.top) / cursorResolution + 1) * cursorResolution,
               secondary: rectangle.left
             };
           },
@@ -280,7 +275,7 @@
               }
               :
               {
-                primary: search.originRectangle.bottom - rectangle.bottom,
+                primary: Math.floor((search.originRectangle.top - rectangle.top) / cursorResolution + 1) * cursorResolution,
                 secondary: getHorizontalDeviation(rectangle, search.originRectangle.left)
               };
           },
@@ -299,7 +294,7 @@
               }
               :
               {
-                primary: rectangle.top - search.originRectangle.top,
+                primary: Math.floor((rectangle.top - search.originRectangle.top) / cursorResolution + 1) * cursorResolution,
                 secondary: getHorizontalDeviation(rectangle, search.originRectangle.left)
               };
           },
