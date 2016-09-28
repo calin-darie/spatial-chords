@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <style>
+    * { position:absolute; }
+    #center { 
+      left:400px; 
+      top:400px; 
+      nav-down:navsouth;
+      nav-up:navnorth;
+      nav-left:navwest;
+      nav-right:naveast;
+    }
+
+    #north { left:400px; top:200px; }
+    #south { left:400px; top:600px; }
+    #east { left:600px; top:400px; }
+    #west { left:200px; top:400px; }
+    
+    #navnorth { left:600px; top:0px; nav-down: center; }
+    #navsouth { left:300px; top:800px; nav-up: center; }
+    #naveast { left:700px; top:300px; nav-right: center; }
+    #navwest { left:0px; top:300px; nav-left: center; }
+
+    .nav {border:solid 5px red;}
+  </style>
+</head>
+<body>
+  <textarea id="north"></textarea>
+  <textarea id="west"></textarea>
+  <textarea id="south"></textarea>
+  <textarea id="east"></textarea>
+
+  <textarea class="nav" id="navnorth"></textarea>
+  <textarea class="nav" id="navwest"></textarea>
+  <textarea class="nav" id="navsouth"></textarea>
+  <textarea class="nav" id="naveast"></textarea>
+
+  <textarea id="center"></textarea>
+</body>
+</html>

@@ -81,6 +81,35 @@ namespace SpatialChords.Tests
       ExpectFocusMovesOn("center");
     }
 
+    [TestMethod]
+    public void GivenCssNav_PressingDirectionKey_IgnoresSpatialChordsRulesAndFollowsCssNav()
+    {
+      Assert.Inconclusive("Not implemented yet");
+      var testUrl = GetTestUrl("css-nav-cardinal-points.html");
+      _driver.Navigate().GoToUrl(testUrl);
+      SetInitialFocus("center");
+
+      Press(DirectionKey.Up);
+      ExpectFocusMovesOn("navnorth");
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("center");
+
+      Press(DirectionKey.Down);
+      ExpectFocusMovesOn("navsouth");
+      Press(DirectionKey.Up);
+      ExpectFocusMovesOn("center");
+
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("navwest");
+      Press(DirectionKey.Right);
+      ExpectFocusMovesOn("center");
+
+      Press(DirectionKey.Right);
+      ExpectFocusMovesOn("naveast");
+      Press(DirectionKey.Left);
+      ExpectFocusMovesOn("center");
+    }
+
 
     [TestMethod]
     public void GivenTopmostElementAboveFocusedElement_WhenUpPressedTwice_FocusStaysOnTopmost()
